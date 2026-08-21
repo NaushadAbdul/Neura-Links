@@ -97,38 +97,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setFirebaseUser(user);
       if (user) {
         const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
-        if (user.emailVerified || isGoogleUser) {
-          const isUserAdmin = isUserAdminCheck(user.uid, user.email || undefined);
-          
-          const authenticatedUser: User = {
+        const isUserAdmin = isUserAdminCheck(user.uid, user.email || undefined);
+        
+        const authenticatedUser: User = {
+          id: user.uid,
+          name: user.displayName || user.email?.split('@')[0] || 'Club User',
+          email: user.email || '',
+          avatar: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+          role: isUserAdmin ? 'admin' : 'student',
+          status: 'active',
+          joinedDate: new Date().toISOString().split('T')[0],
+          authProvider: isGoogleUser ? 'google' : 'email',
+        };
+
+        try {
+          setDoc(doc(db, 'users', user.uid), {
             id: user.uid,
-            name: user.displayName || user.email?.split('@')[0] || 'Club User',
-            email: user.email || '',
-            avatar: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-            role: isUserAdmin ? 'admin' : 'student',
-            status: 'active',
-            joinedDate: new Date().toISOString().split('T')[0],
-            authProvider: isGoogleUser ? 'google' : 'email',
-          };
-
-          try {
-            setDoc(doc(db, 'users', user.uid), {
-              id: user.uid,
-              name: authenticatedUser.name,
-              email: authenticatedUser.email,
-              role: authenticatedUser.role,
-              avatar: authenticatedUser.avatar,
-              authProvider: authenticatedUser.authProvider,
-              createdAt: authenticatedUser.joinedDate,
-            }, { merge: true });
-          } catch (e) {
-            console.warn("Firestore user sync notice:", e);
-          }
-
-          setCurrentUser(authenticatedUser);
-        } else {
-          setCurrentUser(null);
+            name: authenticatedUser.name,
+            email: authenticatedUser.email,
+            role: authenticatedUser.role,
+            avatar: authenticatedUser.avatar,
+            authProvider: authenticatedUser.authProvider,
+            createdAt: authenticatedUser.joinedDate,
+          }, { merge: true });
+        } catch (e) {
+          console.warn("Firestore user sync notice:", e);
         }
+
+        setCurrentUser(authenticatedUser);
+      } else {
+        setCurrentUser(null);
       }
       setLoadingAuth(false);
     });
@@ -270,34 +268,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userCredential = await signInWithEmailAndPassword(auth, email.trim(), pass);
       const user = userCredential.user;
 
-      if (!user.emailVerified) {
-        try {
-          await sendEmailVerification(user);
-        } catch (e) {
-          console.warn("Email verification resend:", e);
-        }
-        await signOut(auth);
-        setCurrentUser(null);
-        setFirebaseUser(null);
-        return {
-          success: false,
-          requiresVerification: true,
-          email: user.email || email.trim()
-        };
-      }
-      
-      const matchedSeed = INITIAL_USERS.find(u => u.email.toLowerCase() === user.email?.toLowerCase());
-      const isUserAdmin = user.uid === ADMIN_USER_ID || user.email?.toLowerCase() === 'admin@neuralinks.club' || matchedSeed?.role === 'admin';
+      const isUserAdmin = isUserAdminCheck(user.uid, user.email || undefined);
 
       const authenticatedUser: User = {
         id: user.uid,
-        name: user.displayName || matchedSeed?.name || user.email?.split('@')[0] || 'Club Student',
+        name: user.displayName || user.email?.split('@')[0] || 'Club Student',
         email: user.email || '',
-        avatar: user.photoURL || matchedSeed?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        avatar: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
         role: isUserAdmin ? 'admin' : 'student',
         status: 'active',
-        joinedDate: matchedSeed?.joinedDate || new Date().toISOString().split('T')[0],
+        joinedDate: new Date().toISOString().split('T')[0],
+        authProvider: 'email',
       };
+
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          id: user.uid,
+          name: authenticatedUser.name,
+          email: authenticatedUser.email,
+          role: authenticatedUser.role,
+          avatar: authenticatedUser.avatar,
+          authProvider: 'email',
+          createdAt: authenticatedUser.joinedDate,
+        }, { merge: true });
+      } catch (e) {
+        console.warn("Firestore user sync notice:", e);
+      }
+
       setCurrentUser(authenticatedUser);
       return { success: true };
     } catch (error: any) {
@@ -328,31 +325,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
+      const isUserAdmin = isUserAdminCheck(user.uid, user.email || undefined);
+
+      const authenticatedUser: User = {
+        id: user.uid,
+        name: name?.trim() || user.displayName || user.email?.split('@')[0] || 'Club Student',
+        email: user.email || email.trim(),
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        role: isUserAdmin ? 'admin' : 'student',
+        status: 'active',
+        joinedDate: new Date().toISOString().split('T')[0],
+        authProvider: 'email',
+      };
+
       // Sync user profile document into Firestore database
       try {
         await setDoc(doc(db, 'users', user.uid), {
           id: user.uid,
-          name: name?.trim() || user.email?.split('@')[0] || 'Club Student',
-          email: user.email || email.trim(),
-          role: 'student',
-          createdAt: new Date().toISOString().split('T')[0],
+          name: authenticatedUser.name,
+          email: authenticatedUser.email,
+          role: authenticatedUser.role,
+          avatar: authenticatedUser.avatar,
+          createdAt: authenticatedUser.joinedDate,
           uploadedFilesCount: 0,
-        });
+        }, { merge: true });
       } catch (e) {
         console.warn("Firestore sync user error:", e);
       }
 
-      await sendEmailVerification(user);
-
-      await signOut(auth);
-      setCurrentUser(null);
-      setFirebaseUser(null);
-
-      return {
-        success: false,
-        requiresVerification: true,
-        email: user.email || email.trim()
-      };
+      setCurrentUser(authenticatedUser);
+      return { success: true };
     } catch (error: any) {
       if (error.code === 'auth/unauthorized-domain') {
         return {
