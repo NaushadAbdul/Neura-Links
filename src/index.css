@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Inconsolata:wght@200..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-main: #161616; /* Obsidian Black */
+    --card-surface: #1e1e1e;
+    --card-hover: #262626;
+    --border-color: #2a2224;
+    --accent-crimson: #710014; /* Crimson Depth */
+    --accent-sand: #B38F6F;    /* Warm Sand */
+    --text-pearl: #F2F1ED;     /* Soft Pearl */
+  }
+
+  body {
+    background-color: #161616;
+    color: #F2F1ED;
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .font-heading {
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    letter-spacing: 0.03em;
+  }
+
+  .font-cormorant {
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .font-inconsolata, .font-mono {
+    font-family: 'Inconsolata', monospace;
+  }
+}
+
+/* Palette Utility Classes */
+.bg-obsidian { background-color: #161616; }
+.bg-crimson { background-color: #710014; }
+.bg-sand { background-color: #B38F6F; }
+.bg-pearl { background-color: #F2F1ED; }
+
+.text-obsidian { color: #161616; }
+.text-crimson { color: #710014; }
+.text-sand { color: #B38F6F; }
+.text-pearl { color: #F2F1ED; }
+
+.border-crimson { border-color: #710014; }
+.border-sand { border-color: #B38F6F; }
+.border-pearl { border-color: #F2F1ED; }
+
+/* Template UI glow & hairline styling tuned to Crimson Depth & Warm Sand */
+.glass-panel {
+  background: rgba(30, 30, 30, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(179, 143, 111, 0.15);
+}
+
+.glass-panel-hover:hover {
+  border-color: rgba(113, 0, 20, 0.6);
+  box-shadow: 0 0 24px rgba(113, 0, 20, 0.25);
+}
+
+.neon-border-crimson {
+  border-color: rgba(113, 0, 20, 0.7);
+  box-shadow: 0 0 18px rgba(113, 0, 20, 0.35);
+}
+
+.neon-border-sand {
+  border-color: rgba(179, 143, 111, 0.6);
+  box-shadow: 0 0 18px rgba(179, 143, 111, 0.25);
+}
+
+.text-glow-crimson {
+  text-shadow: 0 0 14px rgba(113, 0, 20, 0.8);
+}
+
+.text-glow-sand {
+  text-shadow: 0 0 12px rgba(179, 143, 111, 0.6);
+}
+
+/* Custom sleek scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #161616;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2224;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #710014;
+}
