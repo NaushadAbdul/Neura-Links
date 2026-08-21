@@ -6,6 +6,8 @@ import {
   db,
   googleProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   sendEmailVerification,
@@ -145,6 +147,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
+  // Handle mobile Google redirect result return
+  useEffect(() => {
+    getRedirectResult(auth).then((result) => {
+      if (result && result.user) {
+        const user = result.user;
+        const isUserAdmin = isUserAdminCheck(user.uid, user.email || undefined);
+        const authenticatedUser: User = {
+          id: user.uid,
+          name: user.displayName || user.email?.split('@')[0] || 'Club User',
+          email: user.email || '',
+          avatar: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+          role: isUserAdmin ? 'admin' : 'student',
+          status: 'active',
+          joinedDate: new Date().toISOString().split('T')[0],
+          authProvider: 'google',
+        };
+        try {
+          setDoc(doc(db, 'users', user.uid), {
+            id: user.uid,
+            name: authenticatedUser.name,
+            email: authenticatedUser.email,
+            role: authenticatedUser.role,
+            avatar: authenticatedUser.avatar,
+            authProvider: 'google',
+            createdAt: authenticatedUser.joinedDate,
+          }, { merge: true });
+        } catch (e) {
+          console.warn("Mobile sync doc error:", e);
+        }
+        setCurrentUser(authenticatedUser);
+      }
+    }).catch((e) => console.warn("Mobile redirect auth result:", e));
+  }, []);
+
   // Save current user to tab-scoped sessionStorage and role-keyed localStorage
   useEffect(() => {
     if (currentUser) {
@@ -168,8 +204,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginAs = (_targetRole: 'admin' | 'student') => {};
 
-  // Firebase Google Sign In (Defaults to student role for security)
+  // Firebase Google Sign In with Mobile Redirect Fallback
   const loginWithGoogle = async (): Promise<AuthResponse> => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+
+    if (isMobile) {
+      try {
+        await signInWithRedirect(auth, googleProvider);
+        return { success: true };
+      } catch (e: any) {
+        console.warn("Mobile signInWithRedirect notice:", e);
+      }
+    }
+
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
@@ -204,19 +251,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
     } catch (error: any) {
       console.warn("Firebase Google Auth:", error);
+      if (error.code === 'auth/popup-blocked' || error.code === 'auth/operation-not-supported-in-this-environment') {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return { success: true };
+        } catch (redirectErr: any) {
+          return { success: false, message: redirectErr.message || "Mobile sign-in error." };
+        }
+      }
       if (error.code === 'auth/unauthorized-domain') {
         const simulatedEmail = window.prompt(
           "Firebase Notice: localhost is not yet in Firebase Console -> Auth -> Authorized Domains.\nEnter your Google email to test login:",
           "naushad@neuralinks.club"
         );
         if (simulatedEmail) {
-          const matchedSeed = INITIAL_USERS.find(u => u.email.toLowerCase() === simulatedEmail.toLowerCase());
-          const isUserAdmin = simulatedEmail.toLowerCase() === 'admin@neuralinks.club' || matchedSeed?.role === 'admin';
+          const isUserAdmin = isUserAdminCheck(undefined, simulatedEmail);
           const fallbackUser: User = {
             id: 'google_user_' + Date.now(),
-            name: matchedSeed?.name || simulatedEmail.split('@')[0],
+            name: simulatedEmail.split('@')[0],
             email: simulatedEmail,
-            avatar: matchedSeed?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+            avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
             role: isUserAdmin ? 'admin' : 'student',
             status: 'active',
             joinedDate: new Date().toISOString().split('T')[0],

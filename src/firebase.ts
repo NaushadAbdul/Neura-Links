@@ -8,6 +8,8 @@ import {
   sendEmailVerification,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   updateProfile,
   User as FirebaseUser
 } from 'firebase/auth';
@@ -47,6 +49,8 @@ export {
   onAuthStateChanged,
   sendEmailVerification,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   updateProfile
 };
 export type { FirebaseUser };
