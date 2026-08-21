@@ -52,6 +52,7 @@ interface AuthContextType {
   loginAs: (targetRole: 'admin' | 'student') => void;
   switchDemoRole: (targetRole: 'admin' | 'student' | 'unregistered') => void;
   logout: () => Promise<void>;
+  refreshAdminStatus: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,43 +62,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Tab-isolated session initial state resolution
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    // 1. First check tab-scoped sessionStorage
     const tabSaved = sessionStorage.getItem('nlbc_tab_user');
     if (tabSaved) {
       try { return JSON.parse(tabSaved); } catch (e) {}
-    }
-
-    // 2. Check route-based saved session
-    const currentPath = window.location.pathname;
-    if (currentPath.startsWith('/admin')) {
-      const adminSaved = localStorage.getItem('nlbc_admin_user');
-      if (adminSaved) {
-        try { return JSON.parse(adminSaved); } catch (e) {}
-      }
-    } else if (currentPath.startsWith('/dashboard') || currentPath.startsWith('/learning') || currentPath.startsWith('/profile') || currentPath.startsWith('/tasks')) {
-      const studentSaved = localStorage.getItem('nlbc_student_user');
-      if (studentSaved) {
-        try { return JSON.parse(studentSaved); } catch (e) {}
-      }
-    }
-
-    // 3. Fallback to general saved user
-    const saved = localStorage.getItem('nlbc_current_user');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
     }
     return null;
   });
 
   const [loadingAuth, setLoadingAuth] = useState(true);
 
-  // Sync Firebase Auth state with tab session isolation
+  // Sync Firebase Auth state with tab session isolation & ID Token Custom Claims verification
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
+
+      let currentTabUser: User | null = null;
+      const rawTabSaved = sessionStorage.getItem('nlbc_tab_user');
+      if (rawTabSaved) {
+        try { currentTabUser = JSON.parse(rawTabSaved); } catch (e) {}
+      }
+
       if (user) {
         const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
-        const isUserAdmin = isUserAdminCheck(user.uid, user.email || undefined);
+
+        // Asynchronously verify Firebase Custom Claims on the ID Token
+        let hasAdminClaim = false;
+        try {
+          const tokenResult = await user.getIdTokenResult(true);
+          if (tokenResult.claims && (tokenResult.claims.admin === true || tokenResult.claims.role === 'admin')) {
+            hasAdminClaim = true;
+          }
+        } catch (claimErr) {
+          console.warn("Custom claims token verification notice:", claimErr);
+        }
+
+        const isUserAdmin = hasAdminClaim || isUserAdminCheck(user.uid, user.email || undefined);
         
         const authenticatedUser: User = {
           id: user.uid,
@@ -124,9 +123,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.warn("Firestore user sync notice:", e);
         }
 
-        setCurrentUser(authenticatedUser);
+        // Prevent cross-tab auth state contamination
+        if (currentTabUser && currentTabUser.id !== user.uid) {
+          setCurrentUser(currentTabUser);
+        } else {
+          setCurrentUser(authenticatedUser);
+          sessionStorage.setItem('nlbc_tab_user', JSON.stringify(authenticatedUser));
+        }
       } else {
-        setCurrentUser(null);
+        // Handle global logout vs tab isolation
+        if (currentTabUser && !sessionStorage.getItem('nlbc_tab_explicit_logout')) {
+          setCurrentUser(currentTabUser);
+        } else {
+          setCurrentUser(null);
+          sessionStorage.removeItem('nlbc_tab_user');
+          sessionStorage.removeItem('nlbc_tab_explicit_logout');
+        }
       }
       setLoadingAuth(false);
     });
@@ -136,10 +148,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Handle mobile Google redirect result return
   useEffect(() => {
-    getRedirectResult(auth).then((result) => {
+    getRedirectResult(auth).then(async (result) => {
       if (result && result.user) {
         const user = result.user;
-        const isUserAdmin = isUserAdminCheck(user.uid, user.email || undefined);
+        let hasAdminClaim = false;
+        try {
+          const tokenResult = await user.getIdTokenResult(true);
+          if (tokenResult.claims && (tokenResult.claims.admin === true || tokenResult.claims.role === 'admin')) {
+            hasAdminClaim = true;
+          }
+        } catch (e) {}
+
+        const isUserAdmin = hasAdminClaim || isUserAdminCheck(user.uid, user.email || undefined);
         const authenticatedUser: User = {
           id: user.uid,
           name: user.displayName || user.email?.split('@')[0] || 'Club User',
@@ -163,21 +183,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (e) {
           console.warn("Mobile sync doc error:", e);
         }
+        sessionStorage.removeItem('nlbc_tab_explicit_logout');
+        sessionStorage.setItem('nlbc_tab_user', JSON.stringify(authenticatedUser));
         setCurrentUser(authenticatedUser);
       }
-    }).catch((e) => console.warn("Mobile redirect auth result:", e));
+    }).catch((e) => console.warn("Mobile redirect auth result notice:", e));
   }, []);
 
-  // Save current user to tab-scoped sessionStorage and role-keyed localStorage
+  // Save current user strictly to tab-scoped sessionStorage
   useEffect(() => {
     if (currentUser) {
       sessionStorage.setItem('nlbc_tab_user', JSON.stringify(currentUser));
-      if (currentUser.role === 'admin') {
-        localStorage.setItem('nlbc_admin_user', JSON.stringify(currentUser));
-      } else {
-        localStorage.setItem('nlbc_student_user', JSON.stringify(currentUser));
-      }
-      localStorage.setItem('nlbc_current_user', JSON.stringify(currentUser));
     } else {
       sessionStorage.removeItem('nlbc_tab_user');
     }
@@ -191,23 +207,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginAs = (_targetRole: 'admin' | 'student') => {};
 
-  // Firebase Google Sign In with Mobile Redirect Fallback
+  // Firebase Google Sign In handling for Desktop, Mobile Safari/Chrome & In-App WebViews
   const loginWithGoogle = async (): Promise<AuthResponse> => {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    sessionStorage.removeItem('nlbc_tab_explicit_logout');
 
-    if (isMobile) {
-      try {
-        await signInWithRedirect(auth, googleProvider);
-        return { success: true };
-      } catch (e: any) {
-        console.warn("Mobile signInWithRedirect notice:", e);
-      }
+    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
+    const isWebView = /wv|WebView|FB_IAB|FB4A|Instagram|LinkedInApp|Snapchat/i.test(userAgent);
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent) || window.innerWidth <= 768;
+
+    if (isWebView) {
+      return {
+        success: false,
+        message: "Google Sign-In is restricted inside in-app webviews (Instagram, Facebook, LinkedIn). Please open this website in Safari or Chrome."
+      };
     }
 
+    // Try signInWithPopup first in click event (bypasses Safari ITP cross-origin redirect cookie blocking on mobile)
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      const isUserAdmin = isUserAdminCheck(user.uid, user.email || undefined);
+
+      let hasAdminClaim = false;
+      try {
+        const tokenResult = await user.getIdTokenResult(true);
+        if (tokenResult.claims && (tokenResult.claims.admin === true || tokenResult.claims.role === 'admin')) {
+          hasAdminClaim = true;
+        }
+      } catch (e) {}
+
+      const isUserAdmin = hasAdminClaim || isUserAdminCheck(user.uid, user.email || undefined);
 
       const authenticatedUser: User = {
         id: user.uid,
@@ -234,22 +262,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn("Firestore sync google user notice:", e);
       }
 
+      sessionStorage.setItem('nlbc_tab_user', JSON.stringify(authenticatedUser));
       setCurrentUser(authenticatedUser);
       return { success: true };
     } catch (error: any) {
-      console.warn("Firebase Google Auth:", error);
-      if (error.code === 'auth/popup-blocked' || error.code === 'auth/operation-not-supported-in-this-environment') {
+      console.warn("Firebase Google Auth Popup error:", error);
+
+      // Fallback to signInWithRedirect if popup is blocked or on mobile error
+      if (
+        isMobile ||
+        error.code === 'auth/popup-blocked' ||
+        error.code === 'auth/operation-not-supported-in-this-environment'
+      ) {
         try {
           await signInWithRedirect(auth, googleProvider);
           return { success: true };
         } catch (redirectErr: any) {
-          return { success: false, message: redirectErr.message || "Mobile sign-in error." };
+          if (redirectErr.code === 'auth/unauthorized-domain') {
+            return {
+              success: false,
+              message: "Firebase Domain Error: Please add 'neura-links.vercel.app' (without https://) in Firebase Console -> Auth -> Settings -> Authorized Domains."
+            };
+          }
+          return { success: false, message: redirectErr.message || "Mobile Google sign-in error." };
         }
       }
+
       if (error.code === 'auth/unauthorized-domain') {
         return { 
           success: false, 
-          message: "Firebase Domain Error: Please add 'neura-links.vercel.app' to Firebase Console -> Authentication -> Settings -> Authorized Domains." 
+          message: "Firebase Domain Error: Please add 'neura-links.vercel.app' (without https://) in Firebase Console -> Auth -> Settings -> Authorized Domains." 
         };
       }
       if (error.code === 'auth/popup-closed-by-user') {
@@ -264,6 +306,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Sign In with Firebase Email & Password
   const signInWithEmail = async (email: string, pass: string): Promise<AuthResponse> => {
+    sessionStorage.removeItem('nlbc_tab_explicit_logout');
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email.trim(), pass);
       const user = userCredential.user;
@@ -295,13 +338,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn("Firestore user sync notice:", e);
       }
 
+      sessionStorage.setItem('nlbc_tab_user', JSON.stringify(authenticatedUser));
       setCurrentUser(authenticatedUser);
       return { success: true };
     } catch (error: any) {
       if (error.code === 'auth/unauthorized-domain') {
         return {
           success: false,
-          message: "Firebase Domain Error: 'neura-links.vercel.app' is not added to Firebase Console -> Auth -> Authorized Domains."
+          message: "Firebase Domain Error: Please add 'neura-links.vercel.app' (without https://) in Firebase Console -> Auth -> Settings -> Authorized Domains."
         };
       }
       return { 
@@ -313,6 +357,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Sign Up with Firebase Email & Password
   const signUpWithEmail = async (email: string, pass: string, name?: string): Promise<AuthResponse> => {
+    sessionStorage.removeItem('nlbc_tab_explicit_logout');
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), pass);
       const user = userCredential.user;
@@ -353,13 +398,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn("Firestore sync user error:", e);
       }
 
+      sessionStorage.setItem('nlbc_tab_user', JSON.stringify(authenticatedUser));
       setCurrentUser(authenticatedUser);
       return { success: true };
     } catch (error: any) {
       if (error.code === 'auth/unauthorized-domain') {
         return {
           success: false,
-          message: "Firebase Domain Error: 'neura-links.vercel.app' is not added to Firebase Console -> Auth -> Authorized Domains."
+          message: "Firebase Domain Error: Please add 'neura-links.vercel.app' (without https://) in Firebase Console -> Auth -> Settings -> Authorized Domains."
         };
       }
       if (error.code === 'auth/email-already-in-use') {
@@ -403,20 +449,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const switchDemoRole = (_targetRole: 'admin' | 'student' | 'unregistered') => {
+    sessionStorage.removeItem('nlbc_tab_user');
     setCurrentUser(null);
   };
 
   // Sign out
   const logout = async () => {
+    sessionStorage.removeItem('nlbc_tab_user');
+    sessionStorage.setItem('nlbc_tab_explicit_logout', 'true');
+    setCurrentUser(null);
+    setFirebaseUser(null);
     try {
       await signOut(auth);
     } catch (e) {
       console.warn("SignOut notice:", e);
     }
-    setCurrentUser(null);
-    setFirebaseUser(null);
-    sessionStorage.removeItem('nlbc_tab_user');
     localStorage.removeItem('nlbc_current_user');
+  };
+
+
+  // Asynchronously re-evaluate Firebase ID Token custom claims
+  const refreshAdminStatus = async (): Promise<boolean> => {
+    if (auth.currentUser) {
+      try {
+        const tokenResult = await auth.currentUser.getIdTokenResult(true);
+        const claims = tokenResult.claims || {};
+        const isUserAdmin = claims.admin === true || claims.role === 'admin' || isUserAdminCheck(auth.currentUser.uid, auth.currentUser.email || undefined);
+        setCurrentUser(prev => prev ? { ...prev, role: isUserAdmin ? 'admin' : 'student' } : null);
+        return isUserAdmin;
+      } catch (e) {
+        console.warn("Refresh admin claims error:", e);
+      }
+    }
+    return false;
   };
 
   return (
@@ -436,6 +501,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loginAs,
       switchDemoRole,
       logout,
+      refreshAdminStatus,
     }}>
       {children}
     </AuthContext.Provider>

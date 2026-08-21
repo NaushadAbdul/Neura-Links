@@ -1,6 +1,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
+  setPersistence,
+  browserSessionPersistence,
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut,
@@ -34,8 +36,12 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 // Firebase Analytics (browser environment only)
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
-// Initialize Firebase Authentication, Firestore, and Storage
+// Initialize Firebase Authentication, Firestore, and Storage with tab-scoped session persistence
 export const auth = getAuth(app);
+setPersistence(auth, browserSessionPersistence).catch((err) => {
+  console.warn("Firebase tab-session persistence notice:", err);
+});
+
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 

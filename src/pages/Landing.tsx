@@ -36,12 +36,13 @@ export const Landing: React.FC = () => {
     const res = await loginWithGoogle();
     setGoogleLoading(false);
     if (res.success) {
-      const savedUser = localStorage.getItem('nlbc_current_user');
-      const role = savedUser ? JSON.parse(savedUser)?.role : 'student';
-      if (role === 'admin') {
-        navigate('/admin');
+      const tabSaved = sessionStorage.getItem('nlbc_tab_user');
+      const savedUser = tabSaved || localStorage.getItem('nlbc_current_user');
+      const userRole = savedUser ? JSON.parse(savedUser)?.role : (isAdmin ? 'admin' : 'student');
+      if (userRole === 'admin') {
+        navigate('/admin', { replace: true });
       } else {
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     } else if (res.message) {
       setErrorMsg(res.message);
@@ -73,15 +74,16 @@ export const Landing: React.FC = () => {
     setLoading(false);
 
     if (res.success) {
-      const savedUser = localStorage.getItem('nlbc_current_user');
-      const role = savedUser ? JSON.parse(savedUser)?.role : 'student';
-      if (role === 'admin') {
-        navigate('/admin');
+      const tabSaved = sessionStorage.getItem('nlbc_tab_user');
+      const savedUser = tabSaved || localStorage.getItem('nlbc_current_user');
+      const userRole = savedUser ? JSON.parse(savedUser)?.role : (isAdmin ? 'admin' : 'student');
+      if (userRole === 'admin') {
+        navigate('/admin', { replace: true });
       } else {
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     } else if (res.requiresVerification) {
-      // Show Verification Screen with exact message requirement
+      // Show Verification Screen
       setPendingVerificationEmail(res.email || email);
     } else if (res.message) {
       setErrorMsg(res.message);
