@@ -7,7 +7,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && request.auth.uid == "nz5qAUHfP2OKIcPF4DqidBz2sQC2";
+      return isAuthenticated() && (request.auth.uid == "nz5qAUHfP2OKIcPF4DqidBz2sQC2" || request.auth.uid == "yZzLNGTfEHeGT6cBKkspxb8H1SG3");
     }
 
     function isOwner(userId) {
