@@ -6,8 +6,18 @@ import { motion } from 'framer-motion';
 import Hyperspeed, { DEFAULT_EFFECT_OPTIONS } from '../components/common/Hyperspeed';
 
 export const Landing: React.FC = () => {
-  const { loginWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { currentUser, isAuthenticated, isAdmin, loginWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      if (isAdmin || currentUser.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [isAuthenticated, currentUser, isAdmin, navigate]);
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [fullName, setFullName] = useState('');

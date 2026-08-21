@@ -125,18 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.warn("Firestore user sync notice:", e);
           }
 
-          // TAB ISOLATION CHECK:
-          // If this tab is currently on an /admin URL or holds an Admin session, keep Admin in this tab!
-          const currentPath = window.location.pathname;
-          const tabSession = sessionStorage.getItem('nlbc_tab_user');
-          const isTabAdmin = tabSession ? JSON.parse(tabSession)?.role === 'admin' : currentPath.startsWith('/admin');
-
-          if (isTabAdmin && !isUserAdmin) {
-            // Do not overwrite an active Admin tab with a student login from another tab
-            console.log("Tab Session Guard: Preserving Admin session in Admin tab.");
-          } else {
-            setCurrentUser(authenticatedUser);
-          }
+          setCurrentUser(authenticatedUser);
         } else {
           setCurrentUser(null);
         }
