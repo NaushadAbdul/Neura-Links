@@ -260,24 +260,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       if (error.code === 'auth/unauthorized-domain') {
-        const simulatedEmail = window.prompt(
-          "Firebase Notice: localhost is not yet in Firebase Console -> Auth -> Authorized Domains.\nEnter your Google email to test login:",
-          "naushad@neuralinks.club"
-        );
-        if (simulatedEmail) {
-          const isUserAdmin = isUserAdminCheck(undefined, simulatedEmail);
-          const fallbackUser: User = {
-            id: 'google_user_' + Date.now(),
-            name: simulatedEmail.split('@')[0],
-            email: simulatedEmail,
-            avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-            role: isUserAdmin ? 'admin' : 'student',
-            status: 'active',
-            joinedDate: new Date().toISOString().split('T')[0],
-          };
-          setCurrentUser(fallbackUser);
-          return { success: true };
-        }
+        return { 
+          success: false, 
+          message: "Firebase Domain Error: Please add 'neura-links.vercel.app' to Firebase Console -> Authentication -> Settings -> Authorized Domains." 
+        };
       }
       if (error.code === 'auth/popup-closed-by-user') {
         return { success: false, message: "Google sign-in popup was closed." };
@@ -326,6 +312,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentUser(authenticatedUser);
       return { success: true };
     } catch (error: any) {
+      if (error.code === 'auth/unauthorized-domain') {
+        return {
+          success: false,
+          message: "Firebase Domain Error: 'neura-links.vercel.app' is not added to Firebase Console -> Auth -> Authorized Domains."
+        };
+      }
       return { 
         success: false, 
         message: "Email or password is incorrect" 
@@ -373,6 +365,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: user.email || email.trim()
       };
     } catch (error: any) {
+      if (error.code === 'auth/unauthorized-domain') {
+        return {
+          success: false,
+          message: "Firebase Domain Error: 'neura-links.vercel.app' is not added to Firebase Console -> Auth -> Authorized Domains."
+        };
+      }
       if (error.code === 'auth/email-already-in-use') {
         return { 
           success: false, 
