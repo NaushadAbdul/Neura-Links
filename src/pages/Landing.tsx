@@ -163,11 +163,14 @@ export const Landing: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="space-y-4"
         >
-          <h1 className="font-cormorant text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight text-white leading-tight drop-shadow-2xl">
+          <div className="font-script text-4xl sm:text-6xl text-[#B38F6F] font-normal tracking-wide drop-shadow-md">
+            Soul of AI Engineering
+          </div>
+          <h1 className="font-baron text-5xl sm:text-7xl md:text-8xl font-extrabold tracking-wider text-white leading-tight uppercase drop-shadow-2xl">
             BUILD. LEARN. <br />
             CREATE.
           </h1>
-          <p className="font-cormorant italic text-[#B38F6F] text-2xl sm:text-3xl max-w-2xl mx-auto font-normal drop-shadow">
+          <p className="font-script text-3xl sm:text-4xl text-[#B38F6F] max-w-2xl mx-auto font-normal drop-shadow">
             "Learn AI. Build real systems. Become an AI Engineer."
           </p>
         </motion.div>
