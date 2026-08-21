@@ -68,10 +68,10 @@ export const Sidebar: React.FC = () => {
   const navItems = isAdmin ? adminNavItems : studentNavItems;
 
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-[#161616]/75 backdrop-blur-md border-r border-[#2a2224] min-h-[calc(100vh-61px)] p-4 flex-shrink-0">
-      <div className="mb-4 px-3 py-2 bg-[#1e1e1e]/90 border border-[#2a2224] rounded-md flex items-center justify-between">
-        <span className="font-mono text-xs text-[#B38F6F] uppercase tracking-widest">MODE</span>
-        <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded ${isAdmin ? 'bg-[#710014] text-[#F2F1ED] border border-[#710014]' : 'bg-[#1e1e1e] text-[#B38F6F] border border-[#B38F6F]/40'}`}>
+    <aside className="hidden md:flex flex-col w-64 bg-[#0D0D0D]/85 backdrop-blur-md border-r border-[#D4C9B3]/20 min-h-[calc(100vh-61px)] p-4 flex-shrink-0">
+      <div className="mb-4 px-3 py-2 bg-[#161616] border border-[#D4C9B3]/30 rounded-md flex items-center justify-between">
+        <span className="font-mono text-xs text-[#D4C9B3]/70 uppercase tracking-widest">MODE</span>
+        <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded ${isAdmin ? 'bg-[#D4C9B3] text-[#0D0D0D] border border-[#D4C9B3]' : 'bg-[#161616] text-[#D4C9B3] border border-[#D4C9B3]/40'}`}>
           {isAdmin ? 'ADMIN CMS' : 'STUDENT'}
         </span>
       </div>
@@ -85,19 +85,19 @@ export const Sidebar: React.FC = () => {
               to={item.path}
               end={item.path === '/admin' || item.path === '/dashboard'}
               className={({ isActive }) =>
-                `flex items-center justify-between px-3.5 py-2.5 rounded-md font-heading text-xs tracking-wider uppercase transition-all ${
+                `flex items-center justify-between px-3.5 py-2.5 rounded-md font-bodoni text-sm tracking-wide uppercase transition-all ${
                   isActive
-                    ? 'bg-[#710014]/60 text-[#F2F1ED] border-l-2 border-[#B38F6F] font-bold shadow-[0_0_15px_rgba(113,0,20,0.4)]'
-                    : 'text-gray-300 hover:text-white hover:bg-[#262626]/80'
+                    ? 'bg-[#1a1a1a] text-[#D4C9B3] border-l-2 border-[#D4C9B3] font-bold shadow-[0_0_15px_rgba(212,201,179,0.2)]'
+                    : 'text-gray-300 hover:text-white hover:bg-[#1a1a1a]/80'
                 }`
               }
             >
               <div className="flex items-center space-x-3">
-                <Icon className="w-4 h-4 text-[#B38F6F]" />
+                <Icon className="w-4 h-4 text-[#D4C9B3]" />
                 <span>{item.label}</span>
               </div>
               {item.badge && (
-                <span className="bg-[#710014] text-[#F2F1ED] text-[10px] font-mono px-1.5 py-0.5 rounded-full font-bold">
+                <span className="bg-[#D4C9B3] text-[#0D0D0D] text-[10px] font-mono px-1.5 py-0.5 rounded-full font-bold">
                   {item.badge}
                 </span>
               )}
@@ -106,10 +106,15 @@ export const Sidebar: React.FC = () => {
         })}
       </nav>
 
-      {/* Footer info box */}
-      <div className="mt-auto pt-4 border-t border-[#2a2224] text-[11px] font-mono text-gray-500">
-        <div className="text-[#B38F6F]">NEURA LINKS BOTS CLUB</div>
-        <div className="text-gray-500">v2.4.0 • Molten Crimson</div>
+      <div className="pt-4 border-t border-[#D4C9B3]/20 space-y-1 text-[11px] font-mono text-gray-400">
+        <div className="flex justify-between">
+          <span>Platform:</span>
+          <span className="text-[#D4C9B3] font-bold">Neura Links v2.4</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Status:</span>
+          <span className="text-[#D4C9B3] font-bold">Online</span>
+        </div>
       </div>
     </aside>
   );

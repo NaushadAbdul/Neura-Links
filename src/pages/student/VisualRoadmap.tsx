@@ -15,11 +15,11 @@ export const VisualRoadmap: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="green">Completed ✓</Badge>;
+        return <Badge variant="cornsilk">Completed ✓</Badge>;
       case 'in_progress':
-        return <Badge variant="purple">In Progress</Badge>;
+        return <Badge variant="rose">In Progress</Badge>;
       case 'available':
-        return <Badge variant="cyan">Available</Badge>;
+        return <Badge variant="cornsilk">Available</Badge>;
       default:
         return <Badge variant="gray">Locked 🔒</Badge>;
     }
@@ -28,15 +28,15 @@ export const VisualRoadmap: React.FC = () => {
   return (
     <div className="space-y-8 pb-16">
       {/* Title Header */}
-      <div className="space-y-2 border-b border-[#1f1f2a] pb-6">
-        <div className="font-mono text-xs text-purple-400 uppercase tracking-widest flex items-center space-x-2">
-          <Map className="w-4 h-4" />
+      <div className="space-y-2 border-b border-[#674846]/40 pb-6">
+        <div className="font-mono text-xs text-[#FFF8DC] uppercase tracking-widest flex items-center space-x-2 font-bold">
+          <Map className="w-4 h-4 text-[#FFF8DC]" />
           <span>NEURA LINKS // AI ENGINEERING LEARNING ROADMAP</span>
         </div>
-        <h1 className="font-heading text-3xl font-extrabold text-white tracking-wider uppercase">
+        <h1 className="font-cornsilk text-3xl sm:text-4xl font-normal text-[#FFF8DC] tracking-wide uppercase">
           Interactive AI/ML Learning Path
         </h1>
-        <p className="text-sm text-gray-400 max-w-3xl">
+        <p className="text-sm text-[#FFF8DC]/80 max-w-3xl">
           Follow the step-by-step master roadmap to transform from Python beginner to full-stack AI Engineer.
         </p>
       </div>
@@ -44,7 +44,7 @@ export const VisualRoadmap: React.FC = () => {
       {/* Visual Roadmap Path */}
       <div className="max-w-2xl mx-auto space-y-6 relative">
         {/* Connecting central vertical line */}
-        <div className="absolute left-1/2 top-4 bottom-4 w-0.5 bg-gradient-to-b from-purple-600 via-cyan-500 to-gray-800 -translate-x-1/2 z-0 hidden sm:block" />
+        <div className="absolute left-1/2 top-4 bottom-4 w-0.5 bg-gradient-to-b from-[#674846] via-[#FFF8DC] to-[#674846] -translate-x-1/2 z-0 hidden sm:block" />
 
         {sortedNodes.map((node, index) => {
           const isCompleted = node.status === 'completed';
@@ -63,27 +63,27 @@ export const VisualRoadmap: React.FC = () => {
               <Card
                 className={`transition-all duration-300 ${
                   isCompleted
-                    ? 'border-emerald-500/40 bg-[#0e1713]'
+                    ? 'border-[#FFF8DC]/60 bg-[#1c1817]'
                     : isInProgress
-                    ? 'border-purple-500/60 bg-[#161322] shadow-[0_0_25px_rgba(139,92,246,0.2)]'
+                    ? 'border-[#674846] bg-[#1e1516] shadow-[0_0_25px_rgba(103,72,70,0.4)]'
                     : isAvailable
-                    ? 'border-cyan-500/40 bg-[#0d161a]'
-                    : 'border-[#1f1f28] opacity-60'
+                    ? 'border-[#674846]/40 bg-[#161616]'
+                    : 'border-[#3b2827] opacity-60'
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center space-x-3">
-                      <span className="font-mono text-xs font-bold text-gray-500">
+                      <span className="font-mono text-xs font-bold text-gray-400">
                         STEP 0{node.order}
                       </span>
                       {getStatusBadge(node.status)}
                     </div>
 
-                    <h3 className="font-heading text-lg font-bold text-white tracking-wider uppercase">
+                    <h3 className="font-cornsilk text-xl font-normal text-[#FFF8DC] tracking-wide uppercase">
                       {node.title}
                     </h3>
-                    <p className="text-xs text-gray-400 font-sans">
+                    <p className="text-xs text-gray-300 font-sans">
                       {node.description}
                     </p>
                   </div>
@@ -91,10 +91,10 @@ export const VisualRoadmap: React.FC = () => {
                   {!isLocked && (
                     <button
                       onClick={() => navigate('/learning')}
-                      className="bg-[#1a1a26] hover:bg-purple-900/60 border border-[#2a2a3c] text-white font-heading text-xs uppercase tracking-wider py-2 px-4 rounded-md transition-all self-start sm:self-auto flex items-center space-x-1"
+                      className="bg-[#674846] hover:bg-[#7e5957] border border-[#FFF8DC]/40 text-[#FFF8DC] font-heading text-xs uppercase tracking-wider py-2 px-4 rounded-md transition-all self-start sm:self-auto flex items-center space-x-1 cursor-pointer"
                     >
                       <span>Explore</span>
-                      <PlayCircle className="w-3.5 h-3.5 text-purple-400" />
+                      <PlayCircle className="w-3.5 h-3.5 text-[#FFF8DC]" />
                     </button>
                   )}
                 </div>
@@ -103,7 +103,7 @@ export const VisualRoadmap: React.FC = () => {
               {/* Connecting arrow down */}
               {index < sortedNodes.length - 1 && (
                 <div className="flex justify-center my-2">
-                  <ArrowDown className={`w-4 h-4 ${isCompleted ? 'text-emerald-400' : 'text-gray-600'}`} />
+                  <ArrowDown className={`w-4 h-4 ${isCompleted ? 'text-[#FFF8DC]' : 'text-gray-600'}`} />
                 </div>
               )}
             </motion.div>

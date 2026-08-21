@@ -32,15 +32,15 @@ export const LearningHub: React.FC = () => {
   return (
     <div className="space-y-8 pb-12">
       {/* Title Header */}
-      <div className="space-y-2 border-b border-[#1f1f2a] pb-6">
-        <div className="font-mono text-xs text-purple-400 uppercase tracking-widest flex items-center space-x-2">
-          <BookOpen className="w-4 h-4" />
+      <div className="space-y-2 border-b border-[#706C61]/40 pb-6">
+        <div className="font-mono text-xs text-[#EFE9DC] uppercase tracking-widest flex items-center space-x-2 font-bold">
+          <BookOpen className="w-4 h-4 text-[#EFE9DC]" />
           <span>NEURA LINKS // AI ENGINEERING ROADMAP</span>
         </div>
-        <h1 className="font-heading text-3xl font-extrabold text-white tracking-wider uppercase">
+        <h1 className="font-bodoni text-3xl sm:text-5xl font-normal text-[#EFE9DC] tracking-wide uppercase">
           Structured Learning Hub
         </h1>
-        <p className="text-sm text-gray-400 max-w-3xl">
+        <p className="text-sm text-[#EFE9DC]/90 max-w-3xl font-sans leading-relaxed">
           Master the complete AI stack from Python foundations to Deep Learning, Generative AI, RAG systems, and Autonomous Agent Engineering.
         </p>
       </div>
@@ -55,10 +55,10 @@ export const LearningHub: React.FC = () => {
         <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-none">
           <button
             onClick={() => setSelectedLevelId('ALL')}
-            className={`px-4 py-2 rounded-md font-heading text-xs uppercase tracking-wider whitespace-nowrap transition-all ${
+            className={`px-4 py-2 rounded-md font-heading text-xs uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
               selectedLevelId === 'ALL'
-                ? 'bg-purple-600 text-white font-bold shadow-[0_0_15px_rgba(139,92,246,0.4)]'
-                : 'bg-[#111116] text-gray-400 hover:bg-[#1a1a24] border border-[#1f1f28]'
+                ? 'bg-[#674846] text-[#FFF8DC] border border-[#FFF8DC]/40 font-bold shadow-[0_0_15px_rgba(103,72,70,0.5)]'
+                : 'bg-[#161616] text-gray-400 hover:text-[#FFF8DC] hover:bg-[#262626] border border-[#674846]/40'
             }`}
           >
             All Levels
@@ -67,10 +67,10 @@ export const LearningHub: React.FC = () => {
             <button
               key={lvl.id}
               onClick={() => setSelectedLevelId(lvl.id)}
-              className={`px-4 py-2 rounded-md font-heading text-xs uppercase tracking-wider whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-md font-heading text-xs uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
                 selectedLevelId === lvl.id
-                  ? 'bg-purple-600 text-white font-bold shadow-[0_0_15px_rgba(139,92,246,0.4)]'
-                  : 'bg-[#111116] text-gray-400 hover:bg-[#1a1a24] border border-[#1f1f28]'
+                  ? 'bg-[#674846] text-[#FFF8DC] border border-[#FFF8DC]/40 font-bold shadow-[0_0_15px_rgba(103,72,70,0.5)]'
+                  : 'bg-[#161616] text-gray-400 hover:text-[#FFF8DC] hover:bg-[#262626] border border-[#674846]/40'
               }`}
             >
               LVL 0{lvl.order} • {lvl.title.split('—')[1] || lvl.title}
@@ -89,12 +89,12 @@ export const LearningHub: React.FC = () => {
 
             return (
               <div key={lvl.id} className="space-y-4">
-                <div className="flex items-center space-x-3 border-b border-[#1f1f28] pb-2">
-                  <div className="w-8 h-8 rounded bg-purple-950/80 border border-purple-800 flex items-center justify-center font-mono font-bold text-purple-300 text-xs">
+                <div className="flex items-center space-x-3 border-b border-[#674846]/40 pb-2">
+                  <div className="w-8 h-8 rounded bg-[#674846] border border-[#FFF8DC]/40 flex items-center justify-center font-mono font-bold text-[#FFF8DC] text-xs shadow-md">
                     0{lvl.order}
                   </div>
                   <div>
-                    <h2 className="font-heading text-lg font-bold text-white tracking-wider uppercase">
+                    <h2 className="font-cornsilk text-xl font-normal text-[#FFF8DC] tracking-wide uppercase">
                       {lvl.title}
                     </h2>
                     <p className="text-xs text-gray-400">{lvl.description}</p>
@@ -111,36 +111,36 @@ export const LearningHub: React.FC = () => {
                       <Card
                         key={mod.id}
                         onClick={() => navigate(`/learning/${mod.id}`)}
-                        className="space-y-4 flex flex-col justify-between group"
+                        className="space-y-4 flex flex-col justify-between group border-[#674846]/40 bg-[#161616] hover:border-[#FFF8DC]/60"
                       >
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
-                            <Badge variant={isCompleted ? 'green' : 'purple'}>
+                            <Badge variant={isCompleted ? 'cornsilk' : 'rose'}>
                               {isCompleted ? 'Module Completed' : mod.difficulty}
                             </Badge>
-                            <span className="font-mono text-xs text-gray-500 flex items-center space-x-1">
-                              <Clock className="w-3.5 h-3.5" />
+                            <span className="font-mono text-xs text-gray-400 flex items-center space-x-1">
+                              <Clock className="w-3.5 h-3.5 text-[#FFF8DC]" />
                               <span>{mod.duration}</span>
                             </span>
                           </div>
 
-                          <h3 className="font-heading text-base font-bold text-white tracking-wide group-hover:text-purple-300 transition-colors">
+                          <h3 className="font-cornsilk text-xl font-normal text-[#FFF8DC] tracking-wide group-hover:text-white transition-colors">
                             {mod.title}
                           </h3>
-                          <p className="text-xs text-gray-400 font-sans line-clamp-2">
+                          <p className="text-xs text-gray-300 font-sans line-clamp-2">
                             {mod.description}
                           </p>
                         </div>
 
-                        <div className="pt-4 border-t border-[#1a1a24] flex items-center justify-between">
+                        <div className="pt-4 border-t border-[#674846]/40 flex items-center justify-between">
                           <div className="font-mono text-xs text-gray-400 flex items-center space-x-2">
-                            <BookOpen className="w-3.5 h-3.5 text-purple-400" />
+                            <BookOpen className="w-3.5 h-3.5 text-[#FFF8DC]" />
                             <span>{completedCount} / {moduleLessons.length} Lessons</span>
                           </div>
 
-                          <span className="font-heading text-xs uppercase tracking-wider text-purple-400 group-hover:text-purple-300 font-bold flex items-center space-x-1">
+                          <span className="font-heading text-xs uppercase tracking-wider text-[#FFF8DC] group-hover:text-white font-bold flex items-center space-x-1">
                             <span>Open Module</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
+                            <ArrowRight className="w-3.5 h-3.5 text-[#FFF8DC]" />
                           </span>
                         </div>
                       </Card>

@@ -49,6 +49,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, pass: string) => Promise<AuthResponse>;
   signUpWithEmail: (email: string, pass: string, name?: string) => Promise<AuthResponse>;
   updateUserName: (newName: string) => Promise<void>;
+  updateUserAvatar: (newAvatarUrl: string) => Promise<void>;
   loginAs: (targetRole: 'admin' | 'student') => void;
   switchDemoRole: (targetRole: 'admin' | 'student' | 'unregistered') => void;
   logout: () => Promise<void>;
@@ -448,6 +449,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentUser(prev => prev ? { ...prev, name: trimmed } : null);
   };
 
+  // Update User Avatar Photo (Base64 Data URL / PC file URL)
+  const updateUserAvatar = async (newAvatarUrl: string) => {
+    if (!newAvatarUrl) return;
+
+    if (auth.currentUser) {
+      try {
+        await updateProfile(auth.currentUser, { photoURL: newAvatarUrl });
+      } catch (e) {
+        console.warn("Update avatar profile error:", e);
+      }
+      try {
+        await setDoc(doc(db, 'users', auth.currentUser.uid), { avatar: newAvatarUrl }, { merge: true });
+      } catch (e) {
+        console.warn("Firestore avatar update error:", e);
+      }
+    }
+
+    setCurrentUser(prev => prev ? { ...prev, avatar: newAvatarUrl } : null);
+  };
+
   const switchDemoRole = (_targetRole: 'admin' | 'student' | 'unregistered') => {
     sessionStorage.removeItem('nlbc_tab_user');
     setCurrentUser(null);
@@ -498,6 +519,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signInWithEmail,
       signUpWithEmail,
       updateUserName,
+      updateUserAvatar,
       loginAs,
       switchDemoRole,
       logout,

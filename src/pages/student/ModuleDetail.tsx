@@ -26,7 +26,7 @@ export const ModuleDetail: React.FC = () => {
     return (
       <div className="p-8 text-center text-gray-400 space-y-4">
         <div>Module not found or unpublished.</div>
-        <button onClick={() => navigate('/learning')} className="text-purple-400 font-mono text-xs">
+        <button onClick={() => navigate('/learning')} className="text-[#EFE9DC] font-mono text-xs underline">
           ← Return to Learning Hub
         </button>
       </div>
@@ -38,40 +38,42 @@ export const ModuleDetail: React.FC = () => {
       {/* Back Button */}
       <button
         onClick={() => navigate('/learning')}
-        className="font-mono text-xs text-gray-400 hover:text-white flex items-center space-x-2 transition-colors"
+        className="font-mono text-xs text-gray-400 hover:text-[#EFE9DC] flex items-center space-x-2 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back to Learning Hub</span>
       </button>
 
       {/* Header Banner */}
-      <div className="bg-[#111116] border border-[#1f1f28] p-6 rounded-lg space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="font-mono text-xs text-purple-400 uppercase tracking-widest font-bold">
-            {levelItem?.title || 'LEVEL'}
-          </span>
-          <Badge variant="purple">{moduleItem.difficulty}</Badge>
-        </div>
-
-        <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-wider">
-          {moduleItem.title}
-        </h1>
-        <p className="text-sm text-gray-300 font-sans leading-relaxed">
-          {moduleItem.description}
-        </p>
-
-        <div className="pt-4 border-t border-[#1f1f28] grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <div className="font-mono text-[10px] text-gray-500 uppercase">Lessons</div>
-            <div className="font-mono text-sm font-bold text-white">{completedLessonCount} / {moduleLessons.length} Completed</div>
+      <div className="border border-[#706C61]/50 rounded-xl p-6 sm:p-8 bg-[#1c1c19] shadow-2xl space-y-4">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="font-mono text-xs text-[#EFE9DC] uppercase tracking-widest font-bold">
+              {levelItem?.title || 'LEVEL'}
+            </span>
+            <Badge variant="suede">{moduleItem.difficulty}</Badge>
           </div>
-          <div>
-            <div className="font-mono text-[10px] text-gray-500 uppercase">Estimated Duration</div>
-            <div className="font-mono text-sm font-bold text-white">{moduleItem.duration}</div>
-          </div>
-          <div>
-            <div className="font-mono text-[10px] text-gray-500 uppercase">Module Progress</div>
-            <ProgressBar progress={progressPercent} color="purple" showPercentage />
+
+          <h1 className="font-bodoni text-2xl sm:text-4xl font-normal text-[#EFE9DC] tracking-wide">
+            {moduleItem.title}
+          </h1>
+          <p className="text-sm text-[#EFE9DC]/90 font-sans leading-relaxed">
+            {moduleItem.description}
+          </p>
+
+          <div className="pt-4 border-t border-[#706C61]/40 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <div className="font-mono text-[10px] text-gray-400 uppercase">Lessons</div>
+              <div className="font-mono text-sm font-bold text-[#EFE9DC]">{completedLessonCount} / {moduleLessons.length} Completed</div>
+            </div>
+            <div>
+              <div className="font-mono text-[10px] text-gray-400 uppercase">Estimated Duration</div>
+              <div className="font-mono text-sm font-bold text-[#EFE9DC]">{moduleItem.duration}</div>
+            </div>
+            <div>
+              <div className="font-mono text-[10px] text-gray-400 uppercase">Module Progress</div>
+              <ProgressBar progress={progressPercent} color="cornsilk" showPercentage />
+            </div>
           </div>
         </div>
       </div>

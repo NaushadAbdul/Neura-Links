@@ -1,31 +1,76 @@
-@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Alex+Brush&family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inconsolata:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Great+Vibes&family=Alex+Brush&family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inconsolata:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700;800&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --color-olive-smoke: #706C61;
+  --color-chalk-cream: #EFE9DC;
+  --color-velvet-charcoal: #141412;
+  --color-almond-suede: #D4C9B3;
+  --color-cornsilk: #FFF8DC;
+  --color-rose-ebony: #674846;
+  --color-crimson: #710014;
+  --color-sand: #B38F6F;
+  --color-pearl: #EFE9DC;
+  --color-obsidian: #141412;
+  --font-serif: 'Cormorant Garamond', 'Bodoni Moda', serif;
+  --font-combo-serif: 'Cormorant Garamond', 'Bodoni Moda', serif;
+  --font-combo-sans: 'Space Grotesk', 'Syne', sans-serif;
+}
 
 @layer base {
   :root {
-    --bg-main: #161616; /* Obsidian Black */
-    --card-surface: #1e1e1e;
-    --card-hover: #262626;
-    --border-color: #2a2224;
-    --accent-crimson: #710014; /* Crimson Depth */
-    --accent-sand: #B38F6F;    /* Warm Sand */
-    --text-pearl: #F2F1ED;     /* Soft Pearl */
+    --bg-main: #141412; /* Dark Olive Smoke Base */
+    --card-surface: #1c1c19;
+    --card-hover: #262622;
+    --border-color: #383630;
+    
+    /* Combination Palette: Olive Smoke (#706C61) & Chalk Cream (#EFE9DC) */
+    --color-olive-smoke: #706C61; /* HEX #706C61 (RGB 112, 108, 97) */
+    --color-chalk-cream: #EFE9DC; /* HEX #EFE9DC (RGB 239, 233, 220) */
+    
+    --color-velvet-charcoal: #141412;
+    --color-almond-suede: #D4C9B3;
+    --color-cornsilk: #FFF8DC;
+    --color-rose-ebony: #674846;
+    
+    --text-pearl: #EFE9DC;        /* Chalk Cream Text */
   }
 
   body {
-    background-color: #161616;
-    color: #F2F1ED;
-    font-family: 'Plus Jakarta Sans', 'Space Grotesk', system-ui, -apple-system, sans-serif;
+    background-color: #141412;
+    color: #EFE9DC;
+    font-family: 'Space Grotesk', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
   }
 
-  /* Baron Neue (Syne) for bold geometric all-caps titles & headlines */
-  h1, h2, h3, .font-heading, .font-baron {
-    font-family: 'Syne', 'Space Grotesk', sans-serif;
-    letter-spacing: 0.05em;
+  /* Combination Fonts Classes */
+  /* 1. Italic Serif for high-fashion emphasis words (e.g., "Chalk", "Neura", "AI", "Master") */
+  .font-italic-serif, .font-serif-italic, .font-chalk {
+    font-family: 'Cormorant Garamond', 'Bodoni Moda', serif;
+    font-style: italic;
+    letter-spacing: 0.02em;
   }
 
-  /* Aston Script (Great Vibes / Alex Brush) for decorative calligraphic cursive accents & hero titles */
+  /* 2. Bold Modern Sans-Serif for primary keywords (e.g., "Cream", "Smoke", "LINKS", "CLUB") */
+  .font-combo-sans, .font-sans-bold, .font-cream, .font-smoke {
+    font-family: 'Space Grotesk', 'Syne', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  /* Bodoni Moda, Italiana & Cormorant Garamond for sleek display titles */
+  .font-serif-display, .font-bodoni, .font-almond, .font-cornsilk, .font-rose, .font-italiana, .font-cormorant {
+    font-family: 'Cormorant Garamond', 'Bodoni Moda', 'Italiana', serif;
+    letter-spacing: 0.03em;
+  }
+
+  /* Baron Neue (Syne / Space Grotesk) for bold geometric all-caps titles & headlines */
+  h1, h2, h3, .font-heading, .font-baron {
+    font-family: 'Space Grotesk', 'Syne', sans-serif;
+    letter-spacing: 0.04em;
+  }
+
+  /* Aston Script (Great Vibes / Alex Brush) for decorative calligraphic cursive accents */
   .font-script, .font-aston {
     font-family: 'Great Vibes', 'Alex Brush', cursive;
     letter-spacing: 0.02em;
@@ -37,48 +82,75 @@
 }
 
 /* Palette Utility Classes */
-.bg-obsidian { background-color: #161616; }
+.bg-olive-smoke, .bg-olive, .bg-smoke { background-color: #706C61; }
+.bg-chalk-cream, .bg-chalk, .bg-cream { background-color: #EFE9DC; }
+.bg-velvet, .bg-charcoal { background-color: #141412; }
+.bg-almond, .bg-suede { background-color: #D4C9B3; }
+.bg-cornsilk { background-color: #FFF8DC; }
+.bg-rose-ebony { background-color: #674846; }
+.bg-obsidian { background-color: #141412; }
 .bg-crimson { background-color: #710014; }
 .bg-sand { background-color: #B38F6F; }
-.bg-pearl { background-color: #F2F1ED; }
+.bg-pearl { background-color: #EFE9DC; }
 
-.text-obsidian { color: #161616; }
+.text-olive-smoke, .text-olive, .text-smoke { color: #706C61; }
+.text-chalk-cream, .text-chalk, .text-cream { color: #EFE9DC; }
+.text-velvet, .text-charcoal { color: #141412; }
+.text-suede { color: #EFE9DC; }
+.text-cornsilk { color: #FFF8DC; }
+.text-rose-ebony { color: #674846; }
+.text-obsidian { color: #141412; }
 .text-crimson { color: #710014; }
 .text-sand { color: #B38F6F; }
-.text-pearl { color: #F2F1ED; }
+.text-pearl { color: #EFE9DC; }
 
+.border-olive-smoke, .border-olive, .border-smoke { border-color: #706C61; }
+.border-chalk-cream, .border-chalk, .border-cream { border-color: #EFE9DC; }
+.border-velvet, .border-charcoal { border-color: #141412; }
+.border-suede { border-color: #EFE9DC; }
+.border-cornsilk { border-color: #FFF8DC; }
+.border-rose-ebony { border-color: #674846; }
 .border-crimson { border-color: #710014; }
 .border-sand { border-color: #B38F6F; }
-.border-pearl { border-color: #F2F1ED; }
+.border-pearl { border-color: #EFE9DC; }
 
-/* Template UI glow & hairline styling tuned to Crimson Depth & Warm Sand */
+/* Template UI glow & hairline styling tuned to Velvet Charcoal (#141412) & Chalk Cream (#EFE9DC) */
 .glass-panel {
-  background: rgba(30, 30, 30, 0.85);
+  background: rgba(22, 22, 22, 0.88);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(179, 143, 111, 0.15);
+  border: 1px solid rgba(239, 233, 220, 0.25);
 }
 
 .glass-panel-hover:hover {
-  border-color: rgba(113, 0, 20, 0.6);
-  box-shadow: 0 0 24px rgba(113, 0, 20, 0.25);
+  border-color: rgba(212, 201, 179, 0.6);
+  box-shadow: 0 0 24px rgba(212, 201, 179, 0.25);
 }
 
-.neon-border-crimson {
-  border-color: rgba(113, 0, 20, 0.7);
-  box-shadow: 0 0 18px rgba(113, 0, 20, 0.35);
+.neon-border-almond {
+  border-color: rgba(212, 201, 179, 0.8);
+  box-shadow: 0 0 18px rgba(212, 201, 179, 0.4);
 }
 
-.neon-border-sand {
-  border-color: rgba(179, 143, 111, 0.6);
-  box-shadow: 0 0 18px rgba(179, 143, 111, 0.25);
+.neon-border-rose {
+  border-color: rgba(103, 72, 70, 0.8);
+  box-shadow: 0 0 18px rgba(103, 72, 70, 0.45);
 }
 
-.text-glow-crimson {
-  text-shadow: 0 0 14px rgba(113, 0, 20, 0.8);
+.neon-border-cornsilk {
+  border-color: rgba(255, 248, 220, 0.7);
+  box-shadow: 0 0 18px rgba(255, 248, 220, 0.3);
 }
 
-.text-glow-sand {
-  text-shadow: 0 0 12px rgba(179, 143, 111, 0.6);
+.text-glow-almond {
+  text-shadow: 0 0 14px rgba(212, 201, 179, 0.7);
+}
+
+.text-glow-rose {
+  text-shadow: 0 0 14px rgba(103, 72, 70, 0.8);
+}
+
+.text-glow-cornsilk {
+  text-shadow: 0 0 12px rgba(255, 248, 220, 0.6);
 }
 
 /* Custom sleek scrollbar */
@@ -88,14 +160,14 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #161616;
+  background: #0D0D0D;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2224;
+  background: #D4C9B3;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #710014;
+  background: #FFF8DC;
 }

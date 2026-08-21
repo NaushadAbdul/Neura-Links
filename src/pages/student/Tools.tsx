@@ -49,15 +49,15 @@ export const ToolsDirectory: React.FC = () => {
   return (
     <div className="space-y-8 pb-12">
       {/* Title Header */}
-      <div className="space-y-2 border-b border-[#1f1f2a] pb-6">
-        <div className="font-mono text-xs text-purple-400 uppercase tracking-widest flex items-center space-x-2">
-          <Wrench className="w-4 h-4" />
+      <div className="space-y-2 border-b border-[#674846]/40 pb-6">
+        <div className="font-mono text-xs text-[#FFF8DC] uppercase tracking-widest flex items-center space-x-2 font-bold">
+          <Wrench className="w-4 h-4 text-[#FFF8DC]" />
           <span>NEURA LINKS // AI & ML TOOLS DIRECTORY</span>
         </div>
-        <h1 className="font-heading text-3xl font-extrabold text-white tracking-wider uppercase">
+        <h1 className="font-cornsilk text-3xl sm:text-4xl font-normal text-[#FFF8DC] tracking-wide uppercase">
           Essential AI Engineering Tools
         </h1>
-        <p className="text-sm text-gray-400 max-w-3xl">
+        <p className="text-sm text-[#FFF8DC]/80 max-w-3xl">
           Curated industry tools, LLM platforms, frameworks, vector databases, and developer environments recommended for club members.
         </p>
       </div>
@@ -72,10 +72,10 @@ export const ToolsDirectory: React.FC = () => {
         <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-none">
           <button
             onClick={() => setSelectedCategory('ALL')}
-            className={`px-4 py-2 rounded-md font-heading text-xs uppercase tracking-wider whitespace-nowrap transition-all ${
+            className={`px-4 py-2 rounded-md font-heading text-xs uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
               selectedCategory === 'ALL'
-                ? 'bg-purple-600 text-white font-bold shadow-[0_0_15px_rgba(139,92,246,0.4)]'
-                : 'bg-[#111116] text-gray-400 hover:bg-[#1a1a24] border border-[#1f1f28]'
+                ? 'bg-[#674846] text-[#FFF8DC] border border-[#FFF8DC]/40 font-bold shadow-[0_0_15px_rgba(103,72,70,0.5)]'
+                : 'bg-[#161616] text-gray-400 hover:text-[#FFF8DC] hover:bg-[#262626] border border-[#674846]/40'
             }`}
           >
             All Categories ({publishedTools.length})
@@ -84,10 +84,10 @@ export const ToolsDirectory: React.FC = () => {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-md font-heading text-xs uppercase tracking-wider whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-md font-heading text-xs uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
                 selectedCategory === cat
-                  ? 'bg-purple-600 text-white font-bold shadow-[0_0_15px_rgba(139,92,246,0.4)]'
-                  : 'bg-[#111116] text-gray-400 hover:bg-[#1a1a24] border border-[#1f1f28]'
+                  ? 'bg-[#674846] text-[#FFF8DC] border border-[#FFF8DC]/40 font-bold shadow-[0_0_15px_rgba(103,72,70,0.5)]'
+                  : 'bg-[#161616] text-gray-400 hover:text-[#FFF8DC] hover:bg-[#262626] border border-[#674846]/40'
               }`}
             >
               {cat}
@@ -102,20 +102,20 @@ export const ToolsDirectory: React.FC = () => {
           const IconComp = getIconComponent(tool.iconName);
 
           return (
-            <Card key={tool.id} className="space-y-4 flex flex-col justify-between group">
+            <Card key={tool.id} className="space-y-4 flex flex-col justify-between group border-[#674846]/40 bg-[#161616] hover:border-[#FFF8DC]/60">
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
-                  <div className="w-10 h-10 rounded bg-[#181824] border border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:border-purple-400 transition-colors">
+                  <div className="w-10 h-10 rounded bg-[#674846] border border-[#FFF8DC]/40 flex items-center justify-center text-[#FFF8DC] shadow-md">
                     <IconComp className="w-5 h-5" />
                   </div>
-                  <Badge variant="cyan">{tool.skillLevel}</Badge>
+                  <Badge variant="cornsilk">{tool.skillLevel}</Badge>
                 </div>
 
                 <div>
-                  <h3 className="font-heading text-base font-bold text-white tracking-wide group-hover:text-purple-300 transition-colors">
+                  <h3 className="font-cornsilk text-xl font-normal text-[#FFF8DC] tracking-wide group-hover:text-white transition-colors">
                     {tool.name}
                   </h3>
-                  <div className="font-mono text-[10px] text-purple-400 uppercase tracking-widest mt-0.5">
+                  <div className="font-mono text-[10px] text-[#FFF8DC] uppercase tracking-widest mt-0.5 font-bold">
                     {tool.category}
                   </div>
                 </div>
@@ -124,21 +124,21 @@ export const ToolsDirectory: React.FC = () => {
                   {tool.description}
                 </p>
 
-                <div className="p-3 bg-[#0a0a0e] border border-[#1f1f2a] rounded-md space-y-1">
-                  <div className="font-mono text-[10px] text-gray-500 uppercase">Primary Use Case</div>
-                  <div className="text-xs text-gray-300 font-sans">{tool.useCase}</div>
+                <div className="p-3 bg-[#161616] border border-[#674846]/40 rounded-md space-y-1">
+                  <div className="font-mono text-[10px] text-gray-400 uppercase">Primary Use Case</div>
+                  <div className="text-xs text-[#FFF8DC] font-sans">{tool.useCase}</div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#1a1a24]">
+              <div className="pt-4 border-t border-[#674846]/40">
                 <a
                   href={tool.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full bg-[#181824] hover:bg-purple-900/60 border border-[#272738] text-white font-heading text-xs uppercase tracking-wider py-2.5 px-4 rounded-md transition-all flex items-center justify-center space-x-2 group-hover:border-purple-500/50"
+                  className="w-full bg-[#674846] hover:bg-[#7e5957] border border-[#FFF8DC]/40 text-[#FFF8DC] font-heading text-xs uppercase tracking-wider py-2.5 px-4 rounded-md transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-md"
                 >
                   <span>Launch Official Tool</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink className="w-3.5 h-3.5 text-[#FFF8DC]" />
                 </a>
               </div>
             </Card>

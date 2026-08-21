@@ -74,42 +74,42 @@ export const TasksProjects: React.FC = () => {
   return (
     <div className="space-y-8 pb-16">
       {/* Title Header */}
-      <div className="space-y-2 border-b border-[#1f1f2a] pb-6">
-        <div className="font-mono text-xs text-purple-400 uppercase tracking-widest flex items-center space-x-2">
-          <CheckSquare className="w-4 h-4" />
+      <div className="space-y-2 border-b border-[#706C61]/40 pb-6">
+        <div className="font-mono text-xs text-[#EFE9DC] uppercase tracking-widest flex items-center space-x-2 font-bold">
+          <CheckSquare className="w-4 h-4 text-[#EFE9DC]" />
           <span>NEURA LINKS // PRACTICAL EVALUATION</span>
         </div>
-        <h1 className="font-heading text-3xl font-extrabold text-white tracking-wider uppercase">
+        <h1 className="font-bodoni text-3xl sm:text-4xl font-normal text-[#EFE9DC] tracking-wide uppercase">
           Tasks & Major Projects
         </h1>
-        <p className="text-sm text-gray-400 max-w-3xl">
+        <p className="text-sm text-[#EFE9DC]/80 max-w-3xl">
           Apply your AI knowledge by building real systems. Submit code repositories and live applications to earn XP and admin endorsement.
         </p>
       </div>
 
       {/* Dual Tab Switcher */}
-      <div className="flex border-b border-[#1f1f28] space-x-8">
+      <div className="flex border-b border-[#706C61]/40 space-x-8">
         <button
           onClick={() => setActiveTab('tasks')}
-          className={`pb-3 font-heading text-sm uppercase tracking-wider font-bold flex items-center space-x-2 border-b-2 transition-all ${
+          className={`pb-3 font-heading text-sm uppercase tracking-wider font-bold flex items-center space-x-2 border-b-2 transition-all cursor-pointer ${
             activeTab === 'tasks'
-              ? 'border-purple-500 text-purple-300'
-              : 'border-transparent text-gray-400 hover:text-gray-200'
+              ? 'border-[#EFE9DC] text-[#EFE9DC]'
+              : 'border-transparent text-gray-400 hover:text-[#EFE9DC]'
           }`}
         >
-          <CheckSquare className="w-4 h-4" />
+          <CheckSquare className="w-4 h-4 text-[#EFE9DC]" />
           <span>Assigned Tasks ({publishedTasks.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('projects')}
-          className={`pb-3 font-heading text-sm uppercase tracking-wider font-bold flex items-center space-x-2 border-b-2 transition-all ${
+          className={`pb-3 font-heading text-sm uppercase tracking-wider font-bold flex items-center space-x-2 border-b-2 transition-all cursor-pointer ${
             activeTab === 'projects'
-              ? 'border-purple-500 text-purple-300'
-              : 'border-transparent text-gray-400 hover:text-gray-200'
+              ? 'border-[#EFE9DC] text-[#EFE9DC]'
+              : 'border-transparent text-gray-400 hover:text-[#EFE9DC]'
           }`}
         >
-          <Trophy className="w-4 h-4" />
+          <Trophy className="w-4 h-4 text-[#EFE9DC]" />
           <span>Major Projects ({publishedProjects.length})</span>
         </button>
       </div>
@@ -121,17 +121,17 @@ export const TasksProjects: React.FC = () => {
             const sub = getSubmissionStatus('task', t.id);
 
             return (
-              <Card key={t.id} className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1f1f28] pb-3">
+              <Card key={t.id} className="space-y-4 bg-[#1c1c19] border border-[#706C61]/40 hover:border-[#EFE9DC]/60 transition-all p-6 rounded-lg shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#706C61]/30 pb-3">
                   <div>
                     <div className="flex items-center space-x-3">
-                      <Badge variant="cyan">{t.difficulty}</Badge>
-                      <span className="font-mono text-xs text-yellow-400 font-bold flex items-center space-x-1">
-                        <Zap className="w-3.5 h-3.5" />
+                      <Badge variant="suede">{t.difficulty}</Badge>
+                      <span className="font-mono text-xs text-[#EFE9DC] font-bold flex items-center space-x-1">
+                        <Zap className="w-3.5 h-3.5 text-[#EFE9DC]" />
                         <span>+{t.xpReward} XP</span>
                       </span>
                     </div>
-                    <h3 className="font-heading text-lg font-bold text-white tracking-wide mt-1">
+                    <h3 className="font-bodoni text-xl sm:text-2xl font-normal text-[#EFE9DC] tracking-wide mt-1.5">
                       {t.title}
                     </h3>
                   </div>
@@ -140,13 +140,13 @@ export const TasksProjects: React.FC = () => {
                   <div>
                     {sub ? (
                       sub.status === 'approved' ? (
-                        <Badge variant="green">Approved ✓ (+{t.xpReward} XP)</Badge>
+                        <Badge variant="almond">Approved ✓ (+{t.xpReward} XP)</Badge>
                       ) : sub.status === 'rejected' ? (
                         <Badge variant="red">Rejected</Badge>
                       ) : sub.status === 'changes_requested' ? (
                         <Badge variant="yellow">Changes Requested</Badge>
                       ) : (
-                        <Badge variant="purple">Under Admin Review ⏳</Badge>
+                        <Badge variant="suede">Under Admin Review ⏳</Badge>
                       )
                     ) : (
                       <Badge variant="gray">Not Submitted</Badge>
@@ -154,35 +154,35 @@ export const TasksProjects: React.FC = () => {
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-300 font-sans">{t.description}</p>
+                <p className="text-xs text-[#EFE9DC]/90 font-sans leading-relaxed">{t.description}</p>
 
-                <div className="p-3 bg-[#0a0a0e] border border-[#1f1f2a] rounded-md space-y-2">
-                  <div className="font-mono text-[10px] text-purple-400 uppercase font-bold">Instructions & Requirements</div>
-                  <pre className="font-sans text-xs text-gray-300 whitespace-pre-line leading-relaxed">
+                <div className="p-3.5 bg-[#141412] border border-[#706C61]/40 rounded-md space-y-2">
+                  <div className="font-mono text-[10px] text-[#EFE9DC]/70 uppercase font-bold tracking-wider">Instructions & Requirements</div>
+                  <pre className="font-sans text-xs text-[#EFE9DC]/90 whitespace-pre-line leading-relaxed">
                     {t.instructions}
                   </pre>
                 </div>
 
                 {sub?.feedback && (
-                  <div className="p-3 bg-purple-950/40 border border-purple-800/60 rounded-md text-xs text-purple-200 space-y-1">
-                    <div className="font-mono text-[10px] uppercase font-bold text-purple-400">Admin Feedback ({sub.reviewedBy})</div>
+                  <div className="p-3 bg-[#141412] border border-[#706C61]/60 rounded-md text-xs text-[#EFE9DC] space-y-1">
+                    <div className="font-mono text-[10px] uppercase font-bold text-[#EFE9DC]/80">Admin Feedback ({sub.reviewedBy})</div>
                     <div>"{sub.feedback}"</div>
                   </div>
                 )}
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                  <span className="font-mono text-xs text-gray-500 flex items-center space-x-1">
-                    <Calendar className="w-3.5 h-3.5" />
+                  <span className="font-mono text-xs text-gray-400 flex items-center space-x-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-[#EFE9DC]/70" />
                     <span>Deadline: {t.deadline}</span>
                   </span>
 
                   <button
                     onClick={() => handleOpenSubmit('task', t)}
                     disabled={sub?.status === 'approved'}
-                    className={`w-full sm:w-auto py-2 px-5 rounded-md font-heading text-xs uppercase tracking-wider font-bold transition-all flex items-center justify-center space-x-2 ${
+                    className={`w-full sm:w-auto py-2.5 px-5 rounded-md font-heading text-xs uppercase tracking-wider font-bold transition-all flex items-center justify-center space-x-2 ${
                       sub?.status === 'approved'
-                        ? 'bg-emerald-950 text-emerald-400 border border-emerald-800 cursor-default'
-                        : 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)]'
+                        ? 'bg-[#141412] text-[#EFE9DC]/60 border border-[#706C61]/40 cursor-default'
+                        : 'bg-[#706C61] hover:bg-[#858074] text-[#EFE9DC] border border-[#EFE9DC]/40 shadow-[0_0_15px_rgba(112,108,97,0.4)] cursor-pointer'
                     }`}
                   >
                     <Upload className="w-3.5 h-3.5" />
@@ -202,18 +202,18 @@ export const TasksProjects: React.FC = () => {
             const sub = getSubmissionStatus('project', p.id);
 
             return (
-              <Card key={p.id} className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1f1f28] pb-3">
+              <Card key={p.id} className="space-y-4 border-[#706C61]/40 bg-[#1c1c19] hover:border-[#EFE9DC]/60 transition-all p-6 rounded-lg shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#706C61]/30 pb-3">
                   <div>
                     <div className="flex items-center space-x-3">
-                      <Badge variant="purple">{p.difficulty}</Badge>
-                      <Badge variant="cyan">{p.type} Project</Badge>
-                      <span className="font-mono text-xs text-yellow-400 font-bold flex items-center space-x-1">
-                        <Zap className="w-3.5 h-3.5" />
+                      <Badge variant="suede">{p.difficulty}</Badge>
+                      <Badge variant="almond">{p.type} Project</Badge>
+                      <span className="font-mono text-xs text-[#EFE9DC] font-bold flex items-center space-x-1">
+                        <Zap className="w-3.5 h-3.5 text-[#EFE9DC]" />
                         <span>+{p.xpReward} XP</span>
                       </span>
                     </div>
-                    <h3 className="font-heading text-xl font-bold text-white tracking-wide mt-1">
+                    <h3 className="font-bodoni text-xl sm:text-2xl font-normal text-[#EFE9DC] tracking-wide mt-1.5">
                       {p.title}
                     </h3>
                   </div>
@@ -221,9 +221,13 @@ export const TasksProjects: React.FC = () => {
                   <div>
                     {sub ? (
                       sub.status === 'approved' ? (
-                        <Badge variant="green">Project Approved ✓ (+{p.xpReward} XP)</Badge>
+                        <Badge variant="almond">Approved ✓ (+{p.xpReward} XP)</Badge>
+                      ) : sub.status === 'rejected' ? (
+                        <Badge variant="red">Rejected</Badge>
+                      ) : sub.status === 'changes_requested' ? (
+                        <Badge variant="yellow">Changes Requested</Badge>
                       ) : (
-                        <Badge variant="purple">Under Admin Review ⏳</Badge>
+                        <Badge variant="suede">Under Admin Review ⏳</Badge>
                       )
                     ) : (
                       <Badge variant="gray">Not Submitted</Badge>
@@ -232,44 +236,37 @@ export const TasksProjects: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="font-mono text-[10px] text-purple-400 uppercase font-bold">Problem Statement</div>
-                  <p className="text-xs text-gray-300 font-sans italic">{p.problemStatement}</p>
+                  <div className="font-mono text-[10px] text-gray-400 uppercase font-bold">Problem Statement</div>
+                  <p className="text-xs text-gray-300 italic font-sans leading-relaxed">{p.problemStatement}</p>
                 </div>
 
-                <p className="text-xs text-gray-300 font-sans">{p.description}</p>
+                <p className="text-xs text-[#EFE9DC]/90 font-sans leading-relaxed">{p.description}</p>
 
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {p.technologies.map((tech, idx) => (
-                    <span key={idx} className="px-2 py-0.5 bg-[#181824] border border-[#262635] text-gray-300 font-mono text-[10px] rounded">
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {p.technologies.map((tech) => (
+                    <span key={tech} className="px-2.5 py-1 bg-[#141412] border border-[#706C61]/40 text-[#EFE9DC] text-[11px] font-mono rounded">
                       {tech}
                     </span>
                   ))}
                 </div>
 
-                {sub?.feedback && (
-                  <div className="p-3 bg-purple-950/40 border border-purple-800/60 rounded-md text-xs text-purple-200 space-y-1">
-                    <div className="font-mono text-[10px] uppercase font-bold text-purple-400">Admin Feedback ({sub.reviewedBy})</div>
-                    <div>"{sub.feedback}"</div>
-                  </div>
-                )}
-
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                  <span className="font-mono text-xs text-gray-500 flex items-center space-x-1">
-                    <Calendar className="w-3.5 h-3.5" />
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-[#706C61]/30">
+                  <span className="font-mono text-xs text-gray-400 flex items-center space-x-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-[#EFE9DC]/70" />
                     <span>Deadline: {p.deadline}</span>
                   </span>
 
                   <button
                     onClick={() => handleOpenSubmit('project', p)}
                     disabled={sub?.status === 'approved'}
-                    className={`w-full sm:w-auto py-2.5 px-6 rounded-md font-heading text-xs uppercase tracking-wider font-bold transition-all flex items-center justify-center space-x-2 ${
+                    className={`w-full sm:w-auto py-2.5 px-5 rounded-md font-heading text-xs uppercase tracking-wider font-bold transition-all flex items-center justify-center space-x-2 ${
                       sub?.status === 'approved'
-                        ? 'bg-emerald-950 text-emerald-400 border border-emerald-800 cursor-default'
-                        : 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)]'
+                        ? 'bg-[#141412] text-[#EFE9DC]/60 border border-[#706C61]/40 cursor-default'
+                        : 'bg-[#706C61] hover:bg-[#858074] text-[#EFE9DC] border border-[#EFE9DC]/40 shadow-[0_0_15px_rgba(112,108,97,0.4)] cursor-pointer'
                     }`}
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    <span>{sub ? (sub.status === 'approved' ? 'Completed' : 'Resubmit Project') : 'Submit Project Code'}</span>
+                    <span>{sub ? (sub.status === 'approved' ? 'Project Completed' : 'Resubmit Project') : 'Submit Major Project'}</span>
                   </button>
                 </div>
               </Card>

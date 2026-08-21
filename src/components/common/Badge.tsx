@@ -3,18 +3,23 @@ import { clsx } from 'clsx';
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'purple' | 'cyan' | 'green' | 'yellow' | 'red' | 'gray';
+  variant?: 'almond' | 'suede' | 'velvet' | 'cornsilk' | 'rose' | 'purple' | 'cyan' | 'green' | 'yellow' | 'red' | 'gray';
   size?: 'sm' | 'md';
   className?: string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
   children,
-  variant = 'purple',
+  variant = 'almond',
   size = 'sm',
   className = '',
 }) => {
   const variantStyles = {
+    almond: 'bg-[#D4C9B3]/20 text-[#D4C9B3] border-[#D4C9B3]/40',
+    suede: 'bg-[#D4C9B3]/20 text-[#D4C9B3] border-[#D4C9B3]/40',
+    velvet: 'bg-[#0D0D0D] text-[#D4C9B3] border-[#D4C9B3]/30',
+    cornsilk: 'bg-[#FFF8DC]/20 text-[#FFF8DC] border-[#FFF8DC]/40',
+    rose: 'bg-[#674846]/60 text-[#FFF8DC] border-[#674846]',
     purple: 'bg-purple-950/60 text-purple-300 border-purple-800/50',
     cyan: 'bg-cyan-950/60 text-cyan-300 border-cyan-800/50',
     green: 'bg-emerald-950/60 text-emerald-300 border-emerald-800/50',

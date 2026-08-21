@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-three/fiber": "^9.7.0",
     "clsx": "^2.1.1",
     "firebase": "^12.18.0",
     "framer-motion": "^13.1.1",

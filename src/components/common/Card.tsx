@@ -18,8 +18,8 @@ export const Card: React.FC<CardProps> = ({
     <div
       onClick={onClick}
       className={clsx(
-        'bg-[#111116] border border-[#1f1f28] rounded-md p-5 transition-all duration-200',
-        hoverEffect && 'hover:border-purple-500/40 hover:bg-[#16161d] hover:shadow-[0_0_20px_rgba(139,92,246,0.1)]',
+        'bg-[#141414] border border-[#D4C9B3]/25 rounded-md p-5 transition-all duration-200',
+        hoverEffect && 'hover:border-[#D4C9B3]/60 hover:bg-[#1a1a1a] hover:shadow-[0_0_20px_rgba(212,201,179,0.2)]',
         onClick && 'cursor-pointer',
         className
       )}
