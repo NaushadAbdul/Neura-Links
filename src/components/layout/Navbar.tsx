@@ -19,9 +19,11 @@ export const Navbar: React.FC = () => {
       <div className="flex items-center justify-between max-w-7xl mx-auto">
         {/* Brand Logo & Name */}
         <Link to={isAdmin ? "/admin" : "/dashboard"} className="flex items-center space-x-3 group">
-          <div className="w-9 h-9 bg-[#706C61] border border-[#EFE9DC]/60 rounded flex items-center justify-center font-heading font-black text-[#EFE9DC] group-hover:border-[#EFE9DC] group-hover:shadow-[0_0_15px_rgba(239,233,220,0.4)] transition-all">
-            NL
-          </div>
+          <img
+            src="/logo.jpg"
+            alt="Neura Links Logo"
+            className="w-9 h-9 object-cover rounded border border-[#EFE9DC]/60 group-hover:border-[#EFE9DC] group-hover:shadow-[0_0_15px_rgba(239,233,220,0.5)] transition-all"
+          />
           <div>
             <div className="text-lg md:text-xl font-normal tracking-wide uppercase transition-colors flex items-center space-x-1.5">
               <span className="font-italic-serif italic text-[#EFE9DC] font-normal lowercase capitalize">Neura</span>

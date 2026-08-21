@@ -126,9 +126,11 @@ export const Landing: React.FC = () => {
       {/* Header Bar */}
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-10">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-[#706C61] border border-[#EFE9DC] rounded flex items-center justify-center font-heading font-black text-[#EFE9DC] text-lg shadow-[0_0_20px_rgba(239,233,220,0.3)]">
-            NL
-          </div>
+          <img
+            src="/logo.jpg"
+            alt="Neura Links Logo"
+            className="w-10 h-10 object-cover rounded border border-[#EFE9DC] shadow-[0_0_20px_rgba(239,233,220,0.4)]"
+          />
           <div>
             <div className="text-lg font-normal tracking-wide uppercase flex items-center space-x-1.5">
               <span className="font-italic-serif italic text-[#EFE9DC] font-normal lowercase capitalize">Neura</span>
