@@ -138,11 +138,6 @@ export const Landing: React.FC = () => {
             </div>
           </div>
         </div>
-
-        <div className="hidden sm:flex items-center space-x-2 font-inconsolata text-xs text-gray-300 border border-[#2a2224] bg-[#1e1e1e]/80 backdrop-blur-md px-3 py-1.5 rounded-md">
-          <span className="w-2 h-2 rounded-full bg-[#B38F6F] animate-pulse" />
-          <span>Firebase Auth Active • Student Portal</span>
-        </div>
       </header>
 
       {/* Main Hero Section */}
@@ -371,7 +366,7 @@ export const Landing: React.FC = () => {
 
       {/* Footer */}
       <footer className="w-full max-w-7xl mx-auto px-6 py-4 border-t border-[#2a2224] text-center font-inconsolata text-xs text-gray-400 z-10">
-        NEURA LINKS BOTS CLUB © 2026 • Firebase Auth Active
+        NEURA LINKS BOTS CLUB © 2026
       </footer>
     </div>
   );
