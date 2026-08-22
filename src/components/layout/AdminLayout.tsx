@@ -19,7 +19,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <Navbar />
       <div className="flex flex-1 max-w-7xl w-full mx-auto">
         <Sidebar />
-        <main className="flex-1 p-4 md:p-8 overflow-x-hidden min-h-[calc(100vh-61px)]">
+        <main className="flex-1 p-4 pb-20 md:p-8 md:pb-8 overflow-x-hidden min-h-[calc(100vh-61px)]">
           {/* Admin Header Banner for explicit visual clarity */}
           <div className="mb-4 p-3 bg-[#710014]/20 border border-[#710014]/60 rounded-md flex items-center justify-between text-xs font-mono text-[#F2F1ED]">
             <div className="flex items-center space-x-2">

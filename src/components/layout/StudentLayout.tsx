@@ -19,7 +19,7 @@ export const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
       <Navbar />
       <div className="flex flex-1 max-w-7xl w-full mx-auto">
         <Sidebar />
-        <main className="flex-1 p-4 md:p-8 overflow-x-hidden min-h-[calc(100vh-61px)]">
+        <main className="flex-1 p-4 pb-20 md:p-8 md:pb-8 overflow-x-hidden min-h-[calc(100vh-61px)]">
           {children ? children : <Outlet />}
         </main>
       </div>
