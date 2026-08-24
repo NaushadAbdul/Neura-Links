@@ -1,36 +1,21 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
-import { Bell, Zap, User as UserIcon, LogOut, Shield, ChevronDown, LayoutDashboard, Save, CheckCircle2 } from 'lucide-react';
+import { Bell, Zap, User as UserIcon, LogOut, Shield, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
 export const Navbar: React.FC = () => {
   const { currentUser, role, isAdmin, isStudent, logout } = useAuth();
-  const { studentProfiles, notifications, hasUnsavedChanges, saveAdminChanges } = useData();
+  const { studentProfiles, notifications } = useData();
   const navigate = useNavigate();
 
   const [showRoleMenu, setShowRoleMenu] = useState(false);
-  const [saveToast, setSaveToast] = useState(false);
 
   const studentProfile = currentUser ? studentProfiles[currentUser.id] : null;
   const unreadCount = notifications.filter(n => !n.read && (isStudent ? n.studentId === currentUser?.id : true)).length;
 
-  const handleSaveClick = () => {
-    saveAdminChanges();
-    setSaveToast(true);
-    setTimeout(() => setSaveToast(false), 3500);
-  };
-
   return (
     <header className="sticky top-0 z-40 w-full bg-[#141412]/90 backdrop-blur-md border-b border-[#706C61]/30 px-4 md:px-8 py-3">
-      {/* Toast Alert */}
-      {saveToast && (
-        <div className="fixed top-16 right-6 z-50 bg-[#161616] border border-emerald-500/60 text-emerald-300 px-4 py-3 rounded-lg shadow-2xl flex items-center space-x-2.5 animate-bounce font-mono text-xs">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>All admin changes saved & published live to student portal!</span>
-        </div>
-      )}
-
       <div className="flex items-center justify-between max-w-7xl mx-auto">
         {/* Brand Logo & Name */}
         <Link to={isAdmin ? "/admin" : "/dashboard"} className="flex items-center space-x-3 group">
@@ -52,21 +37,7 @@ export const Navbar: React.FC = () => {
 
         {/* Right Action Items */}
         <div className="flex items-center space-x-3 md:space-x-5">
-          {/* Admin Save Changes Button */}
-          {isAdmin && (
-            <button
-              onClick={handleSaveClick}
-              className={`px-3 py-1.5 md:px-4 md:py-2 rounded-md font-heading text-xs uppercase tracking-wider font-bold transition-all flex items-center space-x-2 shadow-lg cursor-pointer ${
-                hasUnsavedChanges
-                  ? 'bg-[#710014] hover:bg-[#90001a] text-[#FFF8DC] border border-[#FFF8DC]/60 animate-pulse shadow-[0_0_20px_rgba(113,0,20,0.8)]'
-                  : 'bg-[#1c1c19] text-[#EFE9DC] hover:text-white border border-[#706C61]/40 hover:border-[#EFE9DC]/60'
-              }`}
-              title={hasUnsavedChanges ? 'Click to publish pending updates to users' : 'All changes saved & published'}
-            >
-              <Save className="w-4 h-4 text-[#FFF8DC]" />
-              <span>{hasUnsavedChanges ? 'Save Changes *' : 'Save Changes'}</span>
-            </button>
-          )}
+          {/* XP & Level Meter for Students */}
 
           {/* XP & Level Meter for Students */}
           {isStudent && (
