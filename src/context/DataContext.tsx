@@ -86,6 +86,9 @@ interface DataContextType {
   announcements: Announcement[];
   notifications: AppNotification[];
 
+  hasUnsavedChanges: boolean;
+  saveAdminChanges: () => void;
+
   // User Actions Audit Logging
   logUserAction: (action: Omit<UserAction, 'id' | 'timestamp'>) => void;
   registerGoogleUser: (googleUser: User) => void;
@@ -207,6 +210,32 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [achievements, setAchievements] = useState<Achievement[]>(() => getInitial('achievements', INITIAL_ACHIEVEMENTS));
   const [announcements, setAnnouncements] = useState<Announcement[]>(() => getInitial('announcements', INITIAL_ANNOUNCEMENTS));
   const [notifications, setNotifications] = useState<AppNotification[]>(() => getInitial('notifications', INITIAL_NOTIFICATIONS));
+
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const saveAdminChanges = () => {
+    broadcastStateUpdate('levels', levels);
+    broadcastStateUpdate('modules', modules);
+    broadcastStateUpdate('lessons', lessons);
+    broadcastStateUpdate('tools', tools);
+    broadcastStateUpdate('resources', resources);
+    broadcastStateUpdate('tasks', tasks);
+    broadcastStateUpdate('projects', projects);
+    broadcastStateUpdate('announcements', announcements);
+    broadcastStateUpdate('roadmapNodes', roadmapNodes);
+
+    // Sync all to Firestore
+    modules.forEach(m => syncDocToFirestore('modules', m.id, m));
+    lessons.forEach(l => syncDocToFirestore('lessons', l.id, l));
+    tasks.forEach(t => syncDocToFirestore('tasks', t.id, t));
+    projects.forEach(p => syncDocToFirestore('projects', p.id, p));
+    resources.forEach(r => syncDocToFirestore('resources', r.id, r));
+    tools.forEach(t => syncDocToFirestore('tools', t.id, t));
+    announcements.forEach(a => syncDocToFirestore('announcements', a.id, a));
+    roadmapNodes.forEach(rn => syncDocToFirestore('roadmapNodes', rn.id, rn));
+
+    setHasUnsavedChanges(false);
+  };
 
   useEffect(() => { broadcastStateUpdate('users', users); }, [users]);
   useEffect(() => { broadcastStateUpdate('studentProfiles', studentProfiles); }, [studentProfiles]);
@@ -662,14 +691,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newLevel: Level = { ...data, id: `lvl_${Date.now()}` };
     setLevels(prev => [...prev, newLevel]);
     syncDocToFirestore('levels', newLevel.id, newLevel);
+    setHasUnsavedChanges(true);
   };
   const updateLevel = (data: Level) => {
     setLevels(prev => prev.map(l => l.id === data.id ? data : l));
     syncDocToFirestore('levels', data.id, data);
+    setHasUnsavedChanges(true);
   };
   const deleteLevel = (id: string) => {
     setLevels(prev => prev.filter(l => l.id !== id));
     removeDocFromFirestore('levels', id);
+    setHasUnsavedChanges(true);
   };
   const toggleLevelPublish = (id: string) => {
     setLevels(prev => prev.map(l => {
@@ -680,6 +712,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return l;
     }));
+    setHasUnsavedChanges(true);
   };
 
   // ADMIN ACTIONS - CMS (MODULES)
@@ -687,14 +720,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newMod: Module = { ...data, id: `mod_${Date.now()}` };
     setModules(prev => [...prev, newMod]);
     syncDocToFirestore('modules', newMod.id, newMod);
+    setHasUnsavedChanges(true);
   };
   const updateModule = (data: Module) => {
     setModules(prev => prev.map(m => m.id === data.id ? data : m));
     syncDocToFirestore('modules', data.id, data);
+    setHasUnsavedChanges(true);
   };
   const deleteModule = (id: string) => {
     setModules(prev => prev.filter(m => m.id !== id));
     removeDocFromFirestore('modules', id);
+    setHasUnsavedChanges(true);
   };
   const toggleModulePublish = (id: string) => {
     setModules(prev => prev.map(m => {
@@ -705,6 +741,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return m;
     }));
+    setHasUnsavedChanges(true);
   };
 
   // ADMIN ACTIONS - CMS (LESSONS)
@@ -712,14 +749,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newLes: Lesson = { ...data, id: `les_${Date.now()}` };
     setLessons(prev => [...prev, newLes]);
     syncDocToFirestore('lessons', newLes.id, newLes);
+    setHasUnsavedChanges(true);
   };
   const updateLesson = (data: Lesson) => {
     setLessons(prev => prev.map(l => l.id === data.id ? data : l));
     syncDocToFirestore('lessons', data.id, data);
+    setHasUnsavedChanges(true);
   };
   const deleteLesson = (id: string) => {
     setLessons(prev => prev.filter(l => l.id !== id));
     removeDocFromFirestore('lessons', id);
+    setHasUnsavedChanges(true);
   };
   const toggleLessonPublish = (id: string) => {
     setLessons(prev => prev.map(l => {
@@ -730,6 +770,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return l;
     }));
+    setHasUnsavedChanges(true);
   };
 
   // ADMIN ACTIONS - CMS (TOOLS)
@@ -737,14 +778,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newTool: Tool = { ...data, id: `tool_${Date.now()}` };
     setTools(prev => [...prev, newTool]);
     syncDocToFirestore('tools', newTool.id, newTool);
+    setHasUnsavedChanges(true);
   };
   const updateTool = (data: Tool) => {
     setTools(prev => prev.map(t => t.id === data.id ? data : t));
     syncDocToFirestore('tools', data.id, data);
+    setHasUnsavedChanges(true);
   };
   const deleteTool = (id: string) => {
     setTools(prev => prev.filter(t => t.id !== id));
     removeDocFromFirestore('tools', id);
+    setHasUnsavedChanges(true);
   };
   const toggleToolPublish = (id: string) => {
     setTools(prev => prev.map(t => {
@@ -755,6 +799,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return t;
     }));
+    setHasUnsavedChanges(true);
   };
 
   // ADMIN ACTIONS - CMS (RESOURCES)
@@ -762,14 +807,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newRes: Resource = { ...data, id: `res_${Date.now()}` };
     setResources(prev => [...prev, newRes]);
     syncDocToFirestore('resources', newRes.id, newRes);
+    setHasUnsavedChanges(true);
   };
   const updateResource = (data: Resource) => {
     setResources(prev => prev.map(r => r.id === data.id ? data : r));
     syncDocToFirestore('resources', data.id, data);
+    setHasUnsavedChanges(true);
   };
   const deleteResource = (id: string) => {
     setResources(prev => prev.filter(r => r.id !== id));
     removeDocFromFirestore('resources', id);
+    setHasUnsavedChanges(true);
   };
   const toggleResourcePublish = (id: string) => {
     setResources(prev => prev.map(r => {
@@ -780,6 +828,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return r;
     }));
+    setHasUnsavedChanges(true);
   };
 
   // ADMIN ACTIONS - CMS (TASKS)
@@ -787,14 +836,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newTask: Task = { ...data, id: `task_${Date.now()}` };
     setTasks(prev => [...prev, newTask]);
     syncDocToFirestore('tasks', newTask.id, newTask);
+    setHasUnsavedChanges(true);
   };
   const updateTask = (data: Task) => {
     setTasks(prev => prev.map(t => t.id === data.id ? data : t));
     syncDocToFirestore('tasks', data.id, data);
+    setHasUnsavedChanges(true);
   };
   const deleteTask = (id: string) => {
     setTasks(prev => prev.filter(t => t.id !== id));
     removeDocFromFirestore('tasks', id);
+    setHasUnsavedChanges(true);
   };
   const toggleTaskPublish = (id: string) => {
     setTasks(prev => prev.map(t => {
@@ -805,6 +857,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return t;
     }));
+    setHasUnsavedChanges(true);
   };
 
   // ADMIN ACTIONS - CMS (PROJECTS)
@@ -812,14 +865,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newProj: Project = { ...data, id: `proj_${Date.now()}` };
     setProjects(prev => [...prev, newProj]);
     syncDocToFirestore('projects', newProj.id, newProj);
+    setHasUnsavedChanges(true);
   };
   const updateProject = (data: Project) => {
     setProjects(prev => prev.map(p => p.id === data.id ? data : p));
     syncDocToFirestore('projects', data.id, data);
+    setHasUnsavedChanges(true);
   };
   const deleteProject = (id: string) => {
     setProjects(prev => prev.filter(p => p.id !== id));
     removeDocFromFirestore('projects', id);
+    setHasUnsavedChanges(true);
   };
   const toggleProjectPublish = (id: string) => {
     setProjects(prev => prev.map(p => {
@@ -830,6 +886,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return p;
     }));
+    setHasUnsavedChanges(true);
   };
 
   // ADMIN SUBMISSION REVIEW
@@ -932,9 +989,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: new Date().toISOString().split('T')[0],
     };
     setAnnouncements(prev => [newAnn, ...prev]);
+    setHasUnsavedChanges(true);
   };
   const deleteAnnouncement = (id: string) => {
     setAnnouncements(prev => prev.filter(a => a.id !== id));
+    setHasUnsavedChanges(true);
   };
 
   // ADMIN ACTIONS - ROADMAP NODES
@@ -942,25 +1001,30 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newNode: RoadmapNode = { ...data, id: `rm_${Date.now()}` };
     setRoadmapNodes(prev => [...prev, newNode]);
     syncDocToFirestore('roadmapNodes', newNode.id, newNode);
+    setHasUnsavedChanges(true);
   };
 
   const updateRoadmapNode = (data: RoadmapNode) => {
     setRoadmapNodes(prev => prev.map(n => n.id === data.id ? data : n));
     syncDocToFirestore('roadmapNodes', data.id, data);
+    setHasUnsavedChanges(true);
   };
 
   const deleteRoadmapNode = (id: string) => {
     setRoadmapNodes(prev => prev.filter(n => n.id !== id));
     removeDocFromFirestore('roadmapNodes', id);
+    setHasUnsavedChanges(true);
   };
 
   // ADMIN ACTIONS - ACHIEVEMENTS
   const createAchievement = (data: Omit<Achievement, 'id'>) => {
     const newAch: Achievement = { ...data, id: `ach_${Date.now()}` };
     setAchievements(prev => [...prev, newAch]);
+    setHasUnsavedChanges(true);
   };
   const deleteAchievement = (id: string) => {
     setAchievements(prev => prev.filter(a => a.id !== id));
+    setHasUnsavedChanges(true);
   };
 
   return (
@@ -980,6 +1044,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       achievements,
       announcements,
       notifications,
+
+      hasUnsavedChanges,
+      saveAdminChanges,
 
       logUserAction,
       registerGoogleUser,
