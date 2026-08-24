@@ -118,8 +118,8 @@ export const LearningHub: React.FC = () => {
                     return (
                       <Card
                         key={mod.id}
-                        onClick={() => navigate(`/learning/${mod.id}`)}
-                        className="space-y-4 flex flex-col justify-between group border-[#674846]/40 bg-[#161616] hover:border-[#FFF8DC]/60"
+                        onClick={() => navigate('/resources')}
+                        className="space-y-4 flex flex-col justify-between group border-[#674846]/40 bg-[#161616] hover:border-[#FFF8DC]/60 cursor-pointer"
                       >
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
@@ -150,7 +150,7 @@ export const LearningHub: React.FC = () => {
                           </div>
 
                           <span className="font-heading text-xs uppercase tracking-wider text-[#FFF8DC] group-hover:text-white font-bold flex items-center space-x-1">
-                            <span>Open Module</span>
+                            <span>Open Resources</span>
                             <ArrowRight className="w-3.5 h-3.5 text-[#FFF8DC]" />
                           </span>
                         </div>
