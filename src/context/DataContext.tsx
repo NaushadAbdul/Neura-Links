@@ -17,7 +17,7 @@ import {
   AppNotification,
 } from '../types';
 
-import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { isUserAdminCheck } from './AuthContext';
 import {
@@ -37,6 +37,37 @@ import {
   INITIAL_ANNOUNCEMENTS,
   INITIAL_NOTIFICATIONS,
 } from '../data/mockSeedData';
+
+const broadcastStateUpdate = (key: string, data: any) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(`nlbc_${key}`, JSON.stringify(data));
+    if ('BroadcastChannel' in window) {
+      const channel = new BroadcastChannel('neura_links_live_sync');
+      channel.postMessage({ key, data });
+      channel.close();
+    }
+  } catch (e) {}
+};
+
+const syncDocToFirestore = (collName: string, id: string, data: any) => {
+  try {
+    setDoc(doc(db, collName, id), data, { merge: true }).catch(err => console.warn(`Firestore sync ${collName} notice:`, err));
+  } catch (e) {}
+};
+
+const removeDocFromFirestore = (collName: string, id: string) => {
+  try {
+    deleteDoc(doc(db, collName, id)).catch(err => console.warn(`Firestore delete ${collName} notice:`, err));
+  } catch (e) {}
+};
+
+const mergeCollections = <T extends { id: string }>(currentItems: T[], fetchedItems: T[]): T[] => {
+  const itemMap = new Map<string, T>();
+  currentItems.forEach(item => itemMap.set(item.id, item));
+  fetchedItems.forEach(item => itemMap.set(item.id, item));
+  return Array.from(itemMap.values());
+};
 
 interface DataContextType {
   users: User[];
@@ -121,9 +152,8 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Helper for localStorage state initialization with legacy mock user filter
   const getInitial = <T,>(key: string, fallback: T): T => {
-    const saved = localStorage.getItem(`nlbc_${key}`);
+    const saved = typeof window !== 'undefined' ? localStorage.getItem(`nlbc_${key}`) : null;
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -136,13 +166,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             u.email !== 'naushad@neuralinks.club' &&
             u.email !== 'rahul@neuralinks.club'
           );
-          localStorage.setItem('nlbc_users', JSON.stringify(cleanedUsers));
+          if (typeof window !== 'undefined') localStorage.setItem('nlbc_users', JSON.stringify(cleanedUsers));
           return cleanedUsers as unknown as T;
         }
         if (key === 'studentProfiles' && typeof parsed === 'object' && parsed !== null) {
           delete parsed['user_student_01'];
           delete parsed['user_student_02'];
-          localStorage.setItem('nlbc_studentProfiles', JSON.stringify(parsed));
+          if (typeof window !== 'undefined') localStorage.setItem('nlbc_studentProfiles', JSON.stringify(parsed));
           return parsed as unknown as T;
         }
         if (key === 'userActions' && Array.isArray(parsed)) {
@@ -152,7 +182,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             a.userEmail !== 'naushad@neuralinks.club' &&
             a.userEmail !== 'rahul@neuralinks.club'
           );
-          localStorage.setItem('nlbc_userActions', JSON.stringify(cleanedActions));
+          if (typeof window !== 'undefined') localStorage.setItem('nlbc_userActions', JSON.stringify(cleanedActions));
           return cleanedActions as unknown as T;
         }
         return parsed;
@@ -177,27 +207,77 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [announcements, setAnnouncements] = useState<Announcement[]>(() => getInitial('announcements', INITIAL_ANNOUNCEMENTS));
   const [notifications, setNotifications] = useState<AppNotification[]>(() => getInitial('notifications', INITIAL_NOTIFICATIONS));
 
-  // Sync to LocalStorage
-  useEffect(() => { localStorage.setItem('nlbc_users', JSON.stringify(users)); }, [users]);
-  useEffect(() => { localStorage.setItem('nlbc_studentProfiles', JSON.stringify(studentProfiles)); }, [studentProfiles]);
-  useEffect(() => { localStorage.setItem('nlbc_userActions', JSON.stringify(userActions)); }, [userActions]);
-  useEffect(() => { localStorage.setItem('nlbc_levels', JSON.stringify(levels)); }, [levels]);
-  useEffect(() => { localStorage.setItem('nlbc_modules', JSON.stringify(modules)); }, [modules]);
-  useEffect(() => { localStorage.setItem('nlbc_lessons', JSON.stringify(lessons)); }, [lessons]);
-  useEffect(() => { localStorage.setItem('nlbc_tools', JSON.stringify(tools)); }, [tools]);
-  useEffect(() => { localStorage.setItem('nlbc_resources', JSON.stringify(resources)); }, [resources]);
-  useEffect(() => { localStorage.setItem('nlbc_roadmapNodes', JSON.stringify(roadmapNodes)); }, [roadmapNodes]);
-  useEffect(() => { localStorage.setItem('nlbc_tasks', JSON.stringify(tasks)); }, [tasks]);
-  useEffect(() => { localStorage.setItem('nlbc_projects', JSON.stringify(projects)); }, [projects]);
-  useEffect(() => { localStorage.setItem('nlbc_submissions', JSON.stringify(submissions)); }, [submissions]);
-  useEffect(() => { localStorage.setItem('nlbc_achievements', JSON.stringify(achievements)); }, [achievements]);
-  useEffect(() => { localStorage.setItem('nlbc_announcements', JSON.stringify(announcements)); }, [announcements]);
-  useEffect(() => { localStorage.setItem('nlbc_notifications', JSON.stringify(notifications)); }, [notifications]);
+  useEffect(() => { broadcastStateUpdate('users', users); }, [users]);
+  useEffect(() => { broadcastStateUpdate('studentProfiles', studentProfiles); }, [studentProfiles]);
+  useEffect(() => { broadcastStateUpdate('userActions', userActions); }, [userActions]);
+  useEffect(() => { broadcastStateUpdate('levels', levels); }, [levels]);
+  useEffect(() => { broadcastStateUpdate('modules', modules); }, [modules]);
+  useEffect(() => { broadcastStateUpdate('lessons', lessons); }, [lessons]);
+  useEffect(() => { broadcastStateUpdate('tools', tools); }, [tools]);
+  useEffect(() => { broadcastStateUpdate('resources', resources); }, [resources]);
+  useEffect(() => { broadcastStateUpdate('roadmapNodes', roadmapNodes); }, [roadmapNodes]);
+  useEffect(() => { broadcastStateUpdate('tasks', tasks); }, [tasks]);
+  useEffect(() => { broadcastStateUpdate('projects', projects); }, [projects]);
+  useEffect(() => { broadcastStateUpdate('submissions', submissions); }, [submissions]);
+  useEffect(() => { broadcastStateUpdate('achievements', achievements); }, [achievements]);
+  useEffect(() => { broadcastStateUpdate('announcements', announcements); }, [announcements]);
+  useEffect(() => { broadcastStateUpdate('notifications', notifications); }, [notifications]);
 
-  // Live Firestore Realtime Snapshot Listeners for Registered Users
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleSync = (key: string, rawData: any) => {
+      try {
+        if (key === 'modules' && Array.isArray(rawData)) setModules(rawData);
+        else if (key === 'lessons' && Array.isArray(rawData)) setLessons(rawData);
+        else if (key === 'tasks' && Array.isArray(rawData)) setTasks(rawData);
+        else if (key === 'projects' && Array.isArray(rawData)) setProjects(rawData);
+        else if (key === 'tools' && Array.isArray(rawData)) setTools(rawData);
+        else if (key === 'resources' && Array.isArray(rawData)) setResources(rawData);
+        else if (key === 'roadmapNodes' && Array.isArray(rawData)) setRoadmapNodes(rawData);
+        else if (key === 'announcements' && Array.isArray(rawData)) setAnnouncements(rawData);
+        else if (key === 'achievements' && Array.isArray(rawData)) setAchievements(rawData);
+        else if (key === 'levels' && Array.isArray(rawData)) setLevels(rawData);
+        else if (key === 'submissions' && Array.isArray(rawData)) setSubmissions(rawData);
+        else if (key === 'users' && Array.isArray(rawData)) setUsers(rawData);
+        else if (key === 'studentProfiles' && typeof rawData === 'object' && rawData !== null) setStudentProfiles(rawData);
+      } catch (e) {
+        console.warn("Realtime sync handle notice:", e);
+      }
+    };
+
+    let bc: BroadcastChannel | null = null;
+    if ('BroadcastChannel' in window) {
+      bc = new BroadcastChannel('neura_links_live_sync');
+      bc.onmessage = (event) => {
+        if (event.data && event.data.key && event.data.data) {
+          handleSync(event.data.key, event.data.data);
+        }
+      };
+    }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (!e.key || !e.newValue || !e.key.startsWith('nlbc_')) return;
+      const dataKey = e.key.replace('nlbc_', '');
+      try {
+        const parsed = JSON.parse(e.newValue);
+        handleSync(dataKey, parsed);
+      } catch (err) {}
+    };
+
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
   useEffect(() => {
     try {
-      const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const unsubs: (() => void)[] = [];
+
+      unsubs.push(onSnapshot(collection(db, 'users'), (snapshot) => {
         if (!snapshot.empty) {
           const fetchedUsers: User[] = snapshot.docs
             .filter(docSnap => docSnap.id !== 'user_admin_01' && docSnap.data().email !== 'admin@neuralinks.club')
@@ -224,14 +304,63 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return Array.from(userMap.values());
           });
         }
-      });
-      return () => unsubUsers();
+      }));
+
+      unsubs.push(onSnapshot(collection(db, 'modules'), (snapshot) => {
+        if (!snapshot.empty) {
+          const items = snapshot.docs.map(d => d.data() as Module);
+          setModules(prev => mergeCollections(prev, items));
+        }
+      }));
+
+      unsubs.push(onSnapshot(collection(db, 'lessons'), (snapshot) => {
+        if (!snapshot.empty) {
+          const items = snapshot.docs.map(d => d.data() as Lesson);
+          setLessons(prev => mergeCollections(prev, items));
+        }
+      }));
+
+      unsubs.push(onSnapshot(collection(db, 'tasks'), (snapshot) => {
+        if (!snapshot.empty) {
+          const items = snapshot.docs.map(d => d.data() as Task);
+          setTasks(prev => mergeCollections(prev, items));
+        }
+      }));
+
+      unsubs.push(onSnapshot(collection(db, 'projects'), (snapshot) => {
+        if (!snapshot.empty) {
+          const items = snapshot.docs.map(d => d.data() as Project);
+          setProjects(prev => mergeCollections(prev, items));
+        }
+      }));
+
+      unsubs.push(onSnapshot(collection(db, 'tools'), (snapshot) => {
+        if (!snapshot.empty) {
+          const items = snapshot.docs.map(d => d.data() as Tool);
+          setTools(prev => mergeCollections(prev, items));
+        }
+      }));
+
+      unsubs.push(onSnapshot(collection(db, 'resources'), (snapshot) => {
+        if (!snapshot.empty) {
+          const items = snapshot.docs.map(d => d.data() as Resource);
+          setResources(prev => mergeCollections(prev, items));
+        }
+      }));
+
+      unsubs.push(onSnapshot(collection(db, 'announcements'), (snapshot) => {
+        if (!snapshot.empty) {
+          const items = snapshot.docs.map(d => d.data() as Announcement);
+          setAnnouncements(prev => mergeCollections(prev, items));
+        }
+      }));
+
+      return () => unsubs.forEach(fn => fn());
     } catch (e) {
-      console.warn("Live Firestore users listener notice:", e);
+      console.warn("Live Firestore collection listeners notice:", e);
     }
   }, []);
 
-  // LOG USER ACTION
   const logUserAction = (actionData: Omit<UserAction, 'id' | 'timestamp'>) => {
     const newAction: UserAction = {
       ...actionData,
@@ -531,105 +660,175 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createLevel = (data: Omit<Level, 'id'>) => {
     const newLevel: Level = { ...data, id: `lvl_${Date.now()}` };
     setLevels(prev => [...prev, newLevel]);
+    syncDocToFirestore('levels', newLevel.id, newLevel);
   };
   const updateLevel = (data: Level) => {
     setLevels(prev => prev.map(l => l.id === data.id ? data : l));
+    syncDocToFirestore('levels', data.id, data);
   };
   const deleteLevel = (id: string) => {
     setLevels(prev => prev.filter(l => l.id !== id));
+    removeDocFromFirestore('levels', id);
   };
   const toggleLevelPublish = (id: string) => {
-    setLevels(prev => prev.map(l => l.id === id ? { ...l, published: !l.published } : l));
+    setLevels(prev => prev.map(l => {
+      if (l.id === id) {
+        const updated = { ...l, published: !l.published };
+        syncDocToFirestore('levels', id, updated);
+        return updated;
+      }
+      return l;
+    }));
   };
 
   // ADMIN ACTIONS - CMS (MODULES)
   const createModule = (data: Omit<Module, 'id'>) => {
     const newMod: Module = { ...data, id: `mod_${Date.now()}` };
     setModules(prev => [...prev, newMod]);
+    syncDocToFirestore('modules', newMod.id, newMod);
   };
   const updateModule = (data: Module) => {
     setModules(prev => prev.map(m => m.id === data.id ? data : m));
+    syncDocToFirestore('modules', data.id, data);
   };
   const deleteModule = (id: string) => {
     setModules(prev => prev.filter(m => m.id !== id));
+    removeDocFromFirestore('modules', id);
   };
   const toggleModulePublish = (id: string) => {
-    setModules(prev => prev.map(m => m.id === id ? { ...m, published: !m.published } : m));
+    setModules(prev => prev.map(m => {
+      if (m.id === id) {
+        const updated = { ...m, published: !m.published };
+        syncDocToFirestore('modules', id, updated);
+        return updated;
+      }
+      return m;
+    }));
   };
 
   // ADMIN ACTIONS - CMS (LESSONS)
   const createLesson = (data: Omit<Lesson, 'id'>) => {
     const newLes: Lesson = { ...data, id: `les_${Date.now()}` };
     setLessons(prev => [...prev, newLes]);
+    syncDocToFirestore('lessons', newLes.id, newLes);
   };
   const updateLesson = (data: Lesson) => {
     setLessons(prev => prev.map(l => l.id === data.id ? data : l));
+    syncDocToFirestore('lessons', data.id, data);
   };
   const deleteLesson = (id: string) => {
     setLessons(prev => prev.filter(l => l.id !== id));
+    removeDocFromFirestore('lessons', id);
   };
   const toggleLessonPublish = (id: string) => {
-    setLessons(prev => prev.map(l => l.id === id ? { ...l, published: !l.published } : l));
+    setLessons(prev => prev.map(l => {
+      if (l.id === id) {
+        const updated = { ...l, published: !l.published };
+        syncDocToFirestore('lessons', id, updated);
+        return updated;
+      }
+      return l;
+    }));
   };
 
   // ADMIN ACTIONS - CMS (TOOLS)
   const createTool = (data: Omit<Tool, 'id'>) => {
     const newTool: Tool = { ...data, id: `tool_${Date.now()}` };
     setTools(prev => [...prev, newTool]);
+    syncDocToFirestore('tools', newTool.id, newTool);
   };
   const updateTool = (data: Tool) => {
     setTools(prev => prev.map(t => t.id === data.id ? data : t));
+    syncDocToFirestore('tools', data.id, data);
   };
   const deleteTool = (id: string) => {
     setTools(prev => prev.filter(t => t.id !== id));
+    removeDocFromFirestore('tools', id);
   };
   const toggleToolPublish = (id: string) => {
-    setTools(prev => prev.map(t => t.id === id ? { ...t, published: !t.published } : t));
+    setTools(prev => prev.map(t => {
+      if (t.id === id) {
+        const updated = { ...t, published: !t.published };
+        syncDocToFirestore('tools', id, updated);
+        return updated;
+      }
+      return t;
+    }));
   };
 
   // ADMIN ACTIONS - CMS (RESOURCES)
   const createResource = (data: Omit<Resource, 'id'>) => {
     const newRes: Resource = { ...data, id: `res_${Date.now()}` };
     setResources(prev => [...prev, newRes]);
+    syncDocToFirestore('resources', newRes.id, newRes);
   };
   const updateResource = (data: Resource) => {
     setResources(prev => prev.map(r => r.id === data.id ? data : r));
+    syncDocToFirestore('resources', data.id, data);
   };
   const deleteResource = (id: string) => {
     setResources(prev => prev.filter(r => r.id !== id));
+    removeDocFromFirestore('resources', id);
   };
   const toggleResourcePublish = (id: string) => {
-    setResources(prev => prev.map(r => r.id === id ? { ...r, published: !r.published } : r));
+    setResources(prev => prev.map(r => {
+      if (r.id === id) {
+        const updated = { ...r, published: !r.published };
+        syncDocToFirestore('resources', id, updated);
+        return updated;
+      }
+      return r;
+    }));
   };
 
   // ADMIN ACTIONS - CMS (TASKS)
   const createTask = (data: Omit<Task, 'id'>) => {
     const newTask: Task = { ...data, id: `task_${Date.now()}` };
     setTasks(prev => [...prev, newTask]);
+    syncDocToFirestore('tasks', newTask.id, newTask);
   };
   const updateTask = (data: Task) => {
     setTasks(prev => prev.map(t => t.id === data.id ? data : t));
+    syncDocToFirestore('tasks', data.id, data);
   };
   const deleteTask = (id: string) => {
     setTasks(prev => prev.filter(t => t.id !== id));
+    removeDocFromFirestore('tasks', id);
   };
   const toggleTaskPublish = (id: string) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, published: !t.published } : t));
+    setTasks(prev => prev.map(t => {
+      if (t.id === id) {
+        const updated = { ...t, published: !t.published };
+        syncDocToFirestore('tasks', id, updated);
+        return updated;
+      }
+      return t;
+    }));
   };
 
   // ADMIN ACTIONS - CMS (PROJECTS)
   const createProject = (data: Omit<Project, 'id'>) => {
     const newProj: Project = { ...data, id: `proj_${Date.now()}` };
     setProjects(prev => [...prev, newProj]);
+    syncDocToFirestore('projects', newProj.id, newProj);
   };
   const updateProject = (data: Project) => {
     setProjects(prev => prev.map(p => p.id === data.id ? data : p));
+    syncDocToFirestore('projects', data.id, data);
   };
   const deleteProject = (id: string) => {
     setProjects(prev => prev.filter(p => p.id !== id));
+    removeDocFromFirestore('projects', id);
   };
   const toggleProjectPublish = (id: string) => {
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, published: !p.published } : p));
+    setProjects(prev => prev.map(p => {
+      if (p.id === id) {
+        const updated = { ...p, published: !p.published };
+        syncDocToFirestore('projects', id, updated);
+        return updated;
+      }
+      return p;
+    }));
   };
 
   // ADMIN SUBMISSION REVIEW
