@@ -14,9 +14,12 @@ import {
   signOut, 
   onAuthStateChanged,
   updateProfile,
+  deleteUser,
+  doc,
+  deleteDoc,
   FirebaseUser
 } from '../firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { setDoc } from 'firebase/firestore';
 
 export const ADMIN_USER_ID = 'nz5qAUHfP2OKIcPF4DqidBz2sQC2';
 export const ADMIN_USER_IDS = ['nz5qAUHfP2OKIcPF4DqidBz2sQC2', 'yZzLNGTfEHeGT6cBKkspxb8H1SG3'];
@@ -53,6 +56,7 @@ interface AuthContextType {
   loginAs: (targetRole: 'admin' | 'student') => void;
   switchDemoRole: (targetRole: 'admin' | 'student' | 'unregistered') => void;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<AuthResponse>;
   refreshAdminStatus: () => Promise<boolean>;
 }
 
@@ -488,6 +492,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('nlbc_current_user');
   };
 
+  // Delete User Account
+  const deleteAccount = async (): Promise<AuthResponse> => {
+    const user = auth.currentUser;
+    const userId = currentUser?.id || user?.uid;
+
+    if (!userId && !user) {
+      return { success: false, message: "No active user account found to delete." };
+    }
+
+    try {
+      // Delete Firestore user document
+      if (userId) {
+        try {
+          await deleteDoc(doc(db, 'users', userId));
+        } catch (e) {
+          console.warn("Firestore user delete doc notice:", e);
+        }
+      }
+
+      // Delete Firebase Auth user
+      if (user) {
+        try {
+          await deleteUser(user);
+        } catch (authErr: any) {
+          console.warn("Firebase deleteUser error:", authErr);
+          if (authErr.code === 'auth/requires-recent-login') {
+            return {
+              success: false,
+              message: "Security Notice: Account deletion requires recent authentication. Please log out, log back in, and try deleting your account again."
+            };
+          }
+          return {
+            success: false,
+            message: authErr.message || "Failed to delete Firebase authentication user."
+          };
+        }
+      }
+
+      // Clear session storage & tab user state
+      sessionStorage.removeItem('nlbc_tab_user');
+      sessionStorage.setItem('nlbc_tab_explicit_logout', 'true');
+      localStorage.removeItem('nlbc_current_user');
+      setCurrentUser(null);
+      setFirebaseUser(null);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("Delete account error:", error);
+      return {
+        success: false,
+        message: error.message || "An unexpected error occurred while deleting your account."
+      };
+    }
+  };
+
 
   // Asynchronously re-evaluate Firebase ID Token custom claims
   const refreshAdminStatus = async (): Promise<boolean> => {
@@ -523,6 +582,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loginAs,
       switchDemoRole,
       logout,
+      deleteAccount,
       refreshAdminStatus,
     }}>
       {children}

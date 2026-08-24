@@ -61,12 +61,14 @@ interface DataContextType {
 
   // Student Actions
   markLessonComplete: (studentId: string, lessonId: string, xpReward: number) => void;
+  updateLessonWatchProgress: (studentId: string, lessonId: string, watchedPercent: number) => void;
   submitTaskOrProject: (submission: Omit<Submission, 'id' | 'status' | 'submittedAt'>) => void;
   markNotificationRead: (notificationId: string) => void;
 
   // Admin Actions - Users
   updateUserStatus: (userId: string, status: 'active' | 'inactive') => void;
   assignStudentXP: (userId: string, xpAmount: number) => void;
+  deleteUserData: (userId: string) => void;
 
   // Admin Actions - Content CMS
   createLevel: (level: Omit<Level, 'id'>) => void;
@@ -257,14 +259,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           userId: googleUser.id,
           level: 1,
           levelTitle: 'LEVEL 01 — Python Foundations',
-          xp: 100,
+          xp: 0,
           streak: 1,
           skills: { 'Python': 50, 'AI Engineering': 30 },
           completedModuleIds: [],
           completedLessonIds: [],
           completedTaskIds: [],
           completedProjectIds: [],
-          unlockedAchievementIds: ['ach_01'],
+          unlockedAchievementIds: [],
         }
       };
     });
@@ -283,6 +285,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // STUDENT ACTIONS
   const markLessonComplete = (studentId: string, lessonId: string, xpReward: number) => {
     const studentUser = users.find(u => u.id === studentId);
+    const targetLesson = lessons.find(l => l.id === lessonId);
+
+    let isCourseCompleted = false;
+    let moduleTitle = '';
 
     setStudentProfiles(prev => {
       const profile = prev[studentId] || {
@@ -297,21 +303,40 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         completedTaskIds: [],
         completedProjectIds: [],
         unlockedAchievementIds: [],
+        lessonWatchProgress: {},
       };
 
       if (profile.completedLessonIds.includes(lessonId)) return prev;
 
-      const newXP = profile.xp + xpReward;
-      let newLevel = profile.level;
-      let newLevelTitle = profile.levelTitle;
+      const updatedCompletedLessons = [...profile.completedLessonIds, lessonId];
+      let updatedCompletedModules = [...profile.completedModuleIds];
 
-      if (newXP >= 2000) { newLevel = 5; newLevelTitle = 'LEVEL 05 — GENERATIVE AI'; }
-      else if (newXP >= 1000) { newLevel = 4; newLevelTitle = 'LEVEL 04 — DEEP LEARNING'; }
-      else if (newXP >= 500) { newLevel = 3; newLevelTitle = 'LEVEL 03 — MACHINE LEARNING'; }
-      else if (newXP >= 200) { newLevel = 2; newLevelTitle = 'LEVEL 02 — DATA SCIENCE'; }
+      // Check if all lessons for this module are completed
+      if (targetLesson) {
+        const moduleLessons = lessons.filter(l => l.moduleId === targetLesson.moduleId && l.published);
+        const allCompleted = moduleLessons.every(l => updatedCompletedLessons.includes(l.id));
+
+        if (allCompleted && !updatedCompletedModules.includes(targetLesson.moduleId)) {
+          updatedCompletedModules.push(targetLesson.moduleId);
+          isCourseCompleted = true;
+          const targetModule = modules.find(m => m.id === targetLesson.moduleId);
+          if (targetModule) moduleTitle = targetModule.title;
+        }
+      }
+
+      const newXP = (profile.xp || 0) + xpReward;
+
+      let newLevel = 1;
+      let newLevelTitle = 'LEVEL 01 — Python Foundations';
+
+      if (newXP > 500) { newLevel = 6; newLevelTitle = 'LEVEL 06 — AGENTIC AI & AI ENGINEERING'; }
+      else if (newXP > 400) { newLevel = 5; newLevelTitle = 'LEVEL 05 — GENERATIVE AI'; }
+      else if (newXP > 300) { newLevel = 4; newLevelTitle = 'LEVEL 04 — DEEP LEARNING'; }
+      else if (newXP > 200) { newLevel = 3; newLevelTitle = 'LEVEL 03 — MACHINE LEARNING'; }
+      else if (newXP > 100) { newLevel = 2; newLevelTitle = 'LEVEL 02 — DATA SCIENCE'; }
 
       // Increase skills
-      const updatedSkills = { ...profile.skills };
+      const updatedSkills = { ...(profile.skills || { 'Python': 50 }) };
       updatedSkills['Python'] = Math.min(100, (updatedSkills['Python'] || 50) + 5);
 
       return {
@@ -322,7 +347,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           level: newLevel,
           levelTitle: newLevelTitle,
           skills: updatedSkills,
-          completedLessonIds: [...profile.completedLessonIds, lessonId],
+          completedLessonIds: updatedCompletedLessons,
+          completedModuleIds: updatedCompletedModules,
         },
       };
     });
@@ -335,21 +361,73 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userEmail: studentUser.email,
         userAvatar: studentUser.avatar,
         actionType: 'lesson_completed',
-        description: `Completed lesson ${lessonId} (+${xpReward} XP)`,
+        description: `Completed lesson "${targetLesson?.title || lessonId}" (+${xpReward} XP)${isCourseCompleted ? ' — Full Course Completed!' : ''}`,
       });
     }
 
-    // Add notification
+    // Add notifications
+    const now = new Date().toISOString().split('T')[0];
     const newNotif: AppNotification = {
       id: `notif_${Date.now()}`,
       studentId,
       title: `Lesson Completed! +${xpReward} XP`,
-      message: `You earned ${xpReward} XP for completing the lesson. Keep going!`,
+      message: `You earned +${xpReward} XP for completing lesson "${targetLesson?.title || lessonId}".`,
       type: 'system',
       read: false,
-      createdAt: new Date().toISOString().split('T')[0],
+      createdAt: now,
     };
     setNotifications(prev => [newNotif, ...prev]);
+
+    if (isCourseCompleted) {
+      const courseNotif: AppNotification = {
+        id: `notif_${Date.now() + 1}`,
+        studentId,
+        title: `🎉 Course Completed!`,
+        message: `Congratulations! You completed the full course "${moduleTitle}".`,
+        type: 'achievement',
+        read: false,
+        createdAt: now,
+      };
+      setNotifications(prev => [courseNotif, ...prev]);
+    }
+  };
+
+  const updateLessonWatchProgress = (studentId: string, lessonId: string, watchedPercent: number) => {
+    const clampedPercent = Math.min(100, Math.max(0, Math.round(watchedPercent)));
+
+    setStudentProfiles(prev => {
+      const profile = prev[studentId] || {
+        userId: studentId,
+        level: 1,
+        levelTitle: 'LEVEL 01 — Python Foundations',
+        xp: 0,
+        streak: 1,
+        skills: { 'Python': 50 },
+        completedModuleIds: [],
+        completedLessonIds: [],
+        completedTaskIds: [],
+        completedProjectIds: [],
+        unlockedAchievementIds: [],
+        lessonWatchProgress: {},
+      };
+
+      const existingMap = profile.lessonWatchProgress || {};
+      const currentPercent = existingMap[lessonId] || 0;
+      if (currentPercent >= clampedPercent) return prev; // Avoid unnecessary re-renders
+
+      const updatedMap = {
+        ...existingMap,
+        [lessonId]: clampedPercent,
+      };
+
+      return {
+        ...prev,
+        [studentId]: {
+          ...profile,
+          lessonWatchProgress: updatedMap,
+        },
+      };
+    });
   };
 
   const submitTaskOrProject = (submissionData: Omit<Submission, 'id' | 'status' | 'submittedAt'>) => {
@@ -426,6 +504,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: `Admin awarded +${xpAmount} bonus XP`,
       });
     }
+  };
+
+  const deleteUserData = (userId: string) => {
+    const u = users.find(x => x.id === userId);
+    if (u) {
+      logUserAction({
+        userId,
+        userName: u.name,
+        userEmail: u.email,
+        userAvatar: u.avatar,
+        actionType: 'account_deleted',
+        description: `Account permanently deleted for user ${u.email}`,
+      });
+    }
+    setUsers(prev => prev.filter(x => x.id !== userId));
+    setStudentProfiles(prev => {
+      const copy = { ...prev };
+      delete copy[userId];
+      return copy;
+    });
+    setNotifications(prev => prev.filter(n => n.studentId !== userId));
   };
 
   // ADMIN ACTIONS - CMS (LEVELS)
@@ -679,11 +778,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       registerGoogleUser,
 
       markLessonComplete,
+      updateLessonWatchProgress,
       submitTaskOrProject,
       markNotificationRead,
 
       updateUserStatus,
       assignStudentXP,
+      deleteUserData,
 
       createLevel,
       updateLevel,

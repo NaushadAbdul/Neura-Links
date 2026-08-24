@@ -13,6 +13,9 @@ import {
   Zap,
   Calendar,
   Code2,
+  FileUp,
+  FileText,
+  X,
 } from 'lucide-react';
 
 export const TasksProjects: React.FC = () => {
@@ -30,6 +33,12 @@ export const TasksProjects: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Folder File Upload State
+  const [submissionFile, setSubmissionFile] = useState<File | null>(null);
+  const [submissionFileName, setSubmissionFileName] = useState('');
+  const [submissionFileSize, setSubmissionFileSize] = useState('');
+  const [submissionFileUrl, setSubmissionFileUrl] = useState('');
+
   const publishedTasks = tasks.filter(t => t.published);
   const publishedProjects = projects.filter(p => p.published);
 
@@ -43,13 +52,47 @@ export const TasksProjects: React.FC = () => {
     setGithubUrl('');
     setLiveDemoUrl('');
     setDocumentation('');
+    setSubmissionFile(null);
+    setSubmissionFileName('');
+    setSubmissionFileSize('');
+    setSubmissionFileUrl('');
     setSuccessMsg('');
     setSubmissionModalOpen(true);
   };
 
+  const handleFolderFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSubmissionFile(file);
+    setSubmissionFileName(file.name);
+    setSubmissionFileSize((file.size / (1024 * 1024)).toFixed(2) + ' MB');
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setSubmissionFileUrl(dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveSubmissionFile = () => {
+    setSubmissionFile(null);
+    setSubmissionFileName('');
+    setSubmissionFileSize('');
+    setSubmissionFileUrl('');
+  };
+
   const handleSubmitForm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser || !selectedTarget || !githubUrl.trim()) return;
+    if (!currentUser || !selectedTarget) return;
+
+    if (!githubUrl.trim() && !submissionFileName) {
+      alert('Please provide a GitHub Repository URL OR upload a solution file from your computer folders.');
+      return;
+    }
 
     setSubmitting(true);
     submitTaskOrProject({
@@ -59,7 +102,10 @@ export const TasksProjects: React.FC = () => {
       type: selectedTarget.type,
       targetId: selectedTarget.item.id,
       targetTitle: selectedTarget.item.title,
-      githubUrl,
+      githubUrl: githubUrl.trim() || undefined,
+      uploadedFileUrl: submissionFileUrl || undefined,
+      uploadedFileName: submissionFileName || undefined,
+      uploadedFileSize: submissionFileSize || undefined,
       liveDemoUrl: liveDemoUrl.trim() || undefined,
       documentation: documentation.trim() || undefined,
     });
@@ -282,19 +328,58 @@ export const TasksProjects: React.FC = () => {
         title={`Submit ${selectedTarget?.type === 'project' ? 'Project' : 'Task'}: ${selectedTarget?.item.title}`}
       >
         <form onSubmit={handleSubmitForm} className="space-y-4">
+          {/* Option 1: GitHub Repository URL */}
           <div className="space-y-1">
             <label className="font-mono text-xs text-gray-300 uppercase font-bold flex items-center space-x-2">
               <Code2 className="w-4 h-4 text-purple-400" />
-              <span>GitHub Repository URL (Required) *</span>
+              <span>GitHub Repository URL (Optional if file uploaded)</span>
             </label>
             <input
-              type="url"
-              required
+              type="text"
               value={githubUrl}
               onChange={(e) => setGithubUrl(e.target.value)}
               placeholder="https://github.com/username/repository-name"
               className="w-full p-3 bg-[#0a0a0e] border border-[#222230] focus:border-purple-500 rounded-md text-xs text-white placeholder-gray-600 focus:outline-none"
             />
+          </div>
+
+          {/* Option 2: Upload Solution File from Computer Folders */}
+          <div className="space-y-2 p-3 bg-[#111118] border border-[#222235] rounded-lg">
+            <label className="font-mono text-xs text-purple-300 uppercase font-bold flex items-center space-x-2">
+              <FileUp className="w-4 h-4 text-purple-400" />
+              <span>Upload Solution File / Code Project from Folders</span>
+            </label>
+
+            {submissionFileName ? (
+              <div className="p-3 bg-purple-950/40 border border-purple-800/60 rounded-md flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <FileText className="w-4 h-4 text-purple-300 shrink-0" />
+                  <div className="text-xs font-mono">
+                    <div className="text-purple-200 font-bold truncate max-w-[240px]">{submissionFileName}</div>
+                    <div className="text-purple-400 text-[10px]">{submissionFileSize || 'Uploaded'} • Local Solution File</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveSubmissionFile}
+                  className="p-1 text-gray-400 hover:text-red-400 rounded cursor-pointer"
+                  title="Remove file"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center p-4 bg-[#0a0a0e] border-2 border-dashed border-[#222230] hover:border-purple-500/60 rounded-md cursor-pointer transition-all">
+                <Upload className="w-6 h-6 text-purple-400 mb-1" />
+                <span className="font-mono text-xs text-purple-300 font-bold">Click to select solution file from your folders</span>
+                <span className="font-mono text-[10px] text-gray-400">Supports .zip, .ipynb, .py, .pdf, .tar.gz, .png, etc.</span>
+                <input
+                  type="file"
+                  onChange={handleFolderFileSelect}
+                  className="hidden"
+                />
+              </label>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -303,7 +388,7 @@ export const TasksProjects: React.FC = () => {
               <span>Live Demo / App URL (Optional)</span>
             </label>
             <input
-              type="url"
+              type="text"
               value={liveDemoUrl}
               onChange={(e) => setLiveDemoUrl(e.target.value)}
               placeholder="https://my-ai-app.streamlit.app or Vercel link"

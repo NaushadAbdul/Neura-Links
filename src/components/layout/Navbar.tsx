@@ -38,13 +38,13 @@ export const Navbar: React.FC = () => {
         {/* Right Action Items */}
         <div className="flex items-center space-x-3 md:space-x-5">
           {/* XP & Level Meter for Students */}
-          {isStudent && studentProfile && (
+          {isStudent && (
             <div className="hidden sm:flex items-center space-x-2 bg-[#1c1c19] border border-[#706C61]/40 px-3 py-2 rounded-md">
               <Zap className="w-4 h-4 text-[#EFE9DC] fill-[#EFE9DC] animate-pulse" />
               <div className="font-mono text-xs">
-                <span className="text-[#EFE9DC] font-bold">{studentProfile.xp} XP</span>
+                <span className="text-[#EFE9DC] font-bold">{(studentProfile?.xp ?? 0).toLocaleString()} XP</span>
                 <span className="text-gray-500 mx-1.5">•</span>
-                <span className="text-[#EFE9DC] font-semibold">LVL 0{studentProfile.level}</span>
+                <span className="text-[#EFE9DC] font-semibold">LVL 0{studentProfile?.level ?? 1}</span>
               </div>
             </div>
           )}
@@ -102,15 +102,13 @@ export const Navbar: React.FC = () => {
                     <span>{isAdmin ? 'Admin Dashboard' : 'Student Dashboard'}</span>
                   </button>
 
-                  {!isAdmin && (
-                    <button
-                      onClick={() => { setShowRoleMenu(false); navigate('/profile'); }}
-                      className="w-full px-3 py-2 flex items-center space-x-2 text-left hover:bg-[#262626] text-[#EFE9DC] cursor-pointer"
-                    >
-                      <UserIcon className="w-3.5 h-3.5 text-[#EFE9DC]" />
-                      <span>My Profile & Photo</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => { setShowRoleMenu(false); navigate('/profile'); }}
+                    className="w-full px-3 py-2 flex items-center space-x-2 text-left hover:bg-[#262626] text-[#EFE9DC] cursor-pointer"
+                  >
+                    <UserIcon className="w-3.5 h-3.5 text-[#EFE9DC]" />
+                    <span>My Profile & Settings</span>
+                  </button>
                 </div>
 
                 <div className="my-1 border-t border-[#2a2224]" />

@@ -1,24 +1,62 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Silk } from '../../components/common/Silk';
-import { Trophy, Calendar, Mail, Award, Globe, Code2, Edit3, Check, X, User, Camera, Upload } from 'lucide-react';
+import { Modal } from '../../components/common/Modal';
+import { 
+  Trophy, 
+  Calendar, 
+  Mail, 
+  Award, 
+  Globe, 
+  Code2, 
+  Edit3, 
+  Check, 
+  X, 
+  Camera, 
+  Upload, 
+  Trash2, 
+  AlertTriangle, 
+  ShieldAlert, 
+  Loader2 
+} from 'lucide-react';
 
 export const StudentProfileView: React.FC = () => {
-  const { currentUser, updateUserName, updateUserAvatar } = useAuth();
-  const { studentProfiles, achievements, projects } = useData();
+  const navigate = useNavigate();
+  const { currentUser, updateUserName, updateUserAvatar, deleteAccount } = useAuth();
+  const { studentProfiles, achievements, projects, deleteUserData } = useData();
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(currentUser?.name || '');
   const [savingName, setSavingName] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
+  // Delete Account Modal State
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmInput, setConfirmInput] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const profile = currentUser ? studentProfiles[currentUser.id] : null;
-  const completedProjects = projects.filter(p => profile?.completedProjectIds.includes(p.id));
+  const profileRaw = currentUser ? studentProfiles[currentUser.id] : null;
+  const profile = profileRaw || {
+    userId: currentUser?.id || '',
+    level: 1,
+    levelTitle: 'LEVEL 01 — Python Foundations',
+    xp: 0,
+    streak: 1,
+    skills: { 'Python': 50 },
+    completedModuleIds: [],
+    completedLessonIds: [],
+    completedTaskIds: [],
+    completedProjectIds: [],
+    unlockedAchievementIds: [],
+  };
+  const completedProjects = projects.filter(p => profile?.completedProjectIds?.includes(p.id));
 
   const handleSaveName = async () => {
     if (!editedName.trim()) return;
@@ -47,6 +85,28 @@ export const StudentProfileView: React.FC = () => {
       setUploadingAvatar(false);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleDeleteAccountSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (confirmInput.trim().toUpperCase() !== 'DELETE' || isDeleting) return;
+
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    const currentId = currentUser?.id;
+    const res = await deleteAccount();
+
+    if (res.success) {
+      if (currentId) {
+        deleteUserData(currentId);
+      }
+      setShowDeleteModal(false);
+      navigate('/login', { replace: true });
+    } else {
+      setDeleteError(res.message || 'Failed to delete account. Please try again.');
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -188,8 +248,8 @@ export const StudentProfileView: React.FC = () => {
           {/* Quick Stats Badge */}
           <div className="bg-[#161616] border border-[#674846]/50 p-4 rounded-md text-center space-y-2 min-w-[160px]">
             <div className="font-mono text-[10px] text-gray-400 uppercase">Total XP</div>
-            <div className="font-mono text-2xl font-bold text-[#FFF8DC]">{profile?.xp.toLocaleString()} XP</div>
-            <div className="font-mono text-[10px] text-[#FFF8DC] font-bold uppercase">{profile?.streak} Day Streak 🔥</div>
+            <div className="font-mono text-2xl font-bold text-[#FFF8DC]">{(profile?.xp ?? 0).toLocaleString()} XP</div>
+            <div className="font-mono text-[10px] text-[#FFF8DC] font-bold uppercase">{(profile?.streak ?? 1)} Day Streak 🔥</div>
           </div>
         </div>
       </div>
@@ -269,6 +329,109 @@ export const StudentProfileView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* DANGER ZONE / ACCOUNT SETTINGS SECTION */}
+      <div className="space-y-4 pt-4 border-t border-[#710014]/50">
+        <div className="flex items-center space-x-2 pb-1">
+          <ShieldAlert className="w-5 h-5 text-red-500" />
+          <h2 className="font-cornsilk text-xl font-normal text-red-400 tracking-wide uppercase">
+            Danger Zone & Account Settings
+          </h2>
+        </div>
+
+        <div className="bg-[#1c1214] border border-red-900/60 rounded-lg p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-red-200 flex items-center space-x-2">
+              <Trash2 className="w-4 h-4 text-red-400" />
+              <span>Delete Your Neura Links Account</span>
+            </h3>
+            <p className="text-xs text-gray-300 max-w-2xl font-sans">
+              Permanently delete your user account, authentication profile, earned XP, achievements, and submitted project data. This action is irreversible and cannot be undone.
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              setConfirmInput('');
+              setDeleteError(null);
+              setShowDeleteModal(true);
+            }}
+            className="px-5 py-2.5 bg-red-950/80 hover:bg-red-900 text-red-200 hover:text-white border border-red-700 hover:border-red-500 rounded-md font-mono text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center space-x-2 shrink-0 shadow-lg hover:shadow-[0_0_15px_rgba(220,38,38,0.4)]"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Delete Account</span>
+          </button>
+        </div>
+      </div>
+
+      {/* DELETE ACCOUNT CONFIRMATION MODAL */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => !isDeleting && setShowDeleteModal(false)}
+        title="Danger: Confirm Account Deletion"
+      >
+        <form onSubmit={handleDeleteAccountSubmit} className="space-y-5">
+          <div className="p-4 bg-red-950/40 border border-red-800/80 rounded-md space-y-2">
+            <div className="flex items-center space-x-2 text-red-400 font-bold text-sm">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
+              <span>Warning: This action is permanent!</span>
+            </div>
+            <p className="text-xs text-red-200/90 leading-relaxed font-sans">
+              Deleting your account (<span className="font-mono font-bold text-white">{currentUser?.email}</span>) will immediately log you out and permanently remove your user record, earned XP, badges, and learning history.
+            </p>
+          </div>
+
+          {deleteError && (
+            <div className="p-3 bg-red-900/60 border border-red-500 text-red-100 rounded-md text-xs font-mono">
+              {deleteError}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label className="block text-xs font-mono text-gray-300 font-bold uppercase">
+              To confirm, type <span className="text-red-400 font-extrabold underline">DELETE</span> below:
+            </label>
+            <input
+              type="text"
+              required
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value)}
+              placeholder="Type DELETE to confirm"
+              disabled={isDeleting}
+              className="w-full p-3 bg-[#141414] border border-red-900/80 focus:border-red-500 rounded-md text-sm text-white font-mono outline-none transition-all placeholder:text-gray-600"
+            />
+          </div>
+
+          <div className="pt-4 flex items-center justify-end space-x-3 border-t border-[#2a2224]">
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={() => setShowDeleteModal(false)}
+              className="px-4 py-2 bg-[#1c1c1c] hover:bg-[#282828] text-gray-300 font-mono text-xs uppercase tracking-wider rounded-md cursor-pointer transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={confirmInput.trim().toUpperCase() !== 'DELETE' || isDeleting}
+              className="px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-800 disabled:border-gray-700 disabled:text-gray-500 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-md shadow-lg transition-all flex items-center space-x-2 cursor-pointer disabled:cursor-not-allowed"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  <span>Deleting Account...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4" />
+                  <span>Permanently Delete My Account</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
+

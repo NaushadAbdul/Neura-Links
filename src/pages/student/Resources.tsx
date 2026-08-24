@@ -13,6 +13,7 @@ import {
   BookOpen,
   Calendar,
   User,
+  Globe,
 } from 'lucide-react';
 
 export const ResourcesCatalog: React.FC = () => {
@@ -129,16 +130,76 @@ export const ResourcesCatalog: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-[#674846]/40">
-              <a
-                href={res.url}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full bg-[#674846] hover:bg-[#7e5957] border border-[#FFF8DC]/40 text-[#FFF8DC] font-heading text-xs uppercase tracking-wider py-2.5 px-4 rounded-md transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-md"
-              >
-                <span>Access Resource</span>
-                <ExternalLink className="w-3.5 h-3.5 text-[#FFF8DC]" />
-              </a>
+            {/* Resource Contents Index (Provided by Admin) */}
+            <div className="pt-3 border-t border-[#674846]/40 space-y-2">
+              <div className="font-mono text-[10px] text-[#FFF8DC] uppercase font-bold tracking-wider flex items-center space-x-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-[#FFF8DC]" />
+                <span>Materials Provided by Admin:</span>
+              </div>
+
+              <div className="space-y-1.5 font-mono text-xs">
+                {/* PDF / Notes Index Item */}
+                {(res.url.startsWith('data:') || res.category === 'PDFs' || res.category === 'Notes' || res.category === 'Cheat Sheets' || res.category === 'Research Papers') && (
+                  <div className="flex items-center justify-between p-2 bg-[#111116] border border-[#674846]/40 rounded">
+                    <span className="flex items-center space-x-2 text-gray-300">
+                      <FileText className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                      <span className="truncate max-w-[170px] sm:max-w-[200px]">
+                        Notes — PDF Document
+                      </span>
+                    </span>
+                    <a
+                      href={res.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      download={res.url.startsWith('data:') ? `${res.title.replace(/\s+/g, '_')}.pdf` : undefined}
+                      className="px-3 py-1 bg-purple-950/80 hover:bg-purple-900 text-purple-200 border border-purple-700/80 rounded text-[11px] font-bold flex items-center space-x-1 transition-all shrink-0 cursor-pointer"
+                    >
+                      <span>Open PDF Notes</span>
+                      <Download className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+
+                {/* YouTube Video Index Item */}
+                {(res.youtubeUrl || res.category === 'YouTube Videos' || res.url.includes('youtube.com') || res.url.includes('youtu.be')) && (
+                  <div className="flex items-center justify-between p-2 bg-[#111116] border border-[#674846]/40 rounded">
+                    <span className="flex items-center space-x-2 text-gray-300">
+                      <Video className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                      <span>YouTube — Video Link</span>
+                    </span>
+                    <a
+                      href={res.youtubeUrl || res.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1 bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-700/80 rounded text-[11px] font-bold flex items-center space-x-1 transition-all shrink-0 cursor-pointer"
+                    >
+                      <span>Watch Video</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+
+                {/* Web Link / GitHub / Documentation Index Item */}
+                {!res.url.startsWith('data:') && !res.url.includes('youtube.com') && !res.url.includes('youtu.be') && (
+                  <div className="flex items-center justify-between p-2 bg-[#111116] border border-[#674846]/40 rounded">
+                    <span className="flex items-center space-x-2 text-gray-300">
+                      <Globe className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>
+                        {res.url.includes('github.com') ? 'GitHub — Code Repo' : 'Web — Documentation'}
+                      </span>
+                    </span>
+                    <a
+                      href={res.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1 bg-[#674846] hover:bg-[#7e5957] text-[#FFF8DC] border border-[#FFF8DC]/40 rounded text-[11px] font-bold flex items-center space-x-1 transition-all shrink-0 cursor-pointer"
+                    >
+                      <span>Visit Link</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
           </Card>
         ))}

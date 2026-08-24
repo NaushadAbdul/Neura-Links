@@ -8,7 +8,6 @@ import {
   FolderGit2,
   Map,
   CheckSquare,
-  BarChart3,
   User,
   Users,
   BookOpenCheck,
@@ -31,7 +30,6 @@ export const MobileNav: React.FC = () => {
     { label: 'Resources', path: '/resources', icon: FolderGit2 },
     { label: 'Roadmap', path: '/roadmap', icon: Map },
     { label: 'Tasks', path: '/tasks', icon: CheckSquare },
-    { label: 'Analysis', path: '/analysis', icon: BarChart3 },
     { label: 'Profile', path: '/profile', icon: User },
   ];
 

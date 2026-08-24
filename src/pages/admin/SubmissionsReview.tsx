@@ -14,6 +14,8 @@ import {
   MessageSquare,
   User,
   Code2,
+  FileText,
+  Download,
 } from 'lucide-react';
 
 export const SubmissionsReview: React.FC = () => {
@@ -59,7 +61,7 @@ export const SubmissionsReview: React.FC = () => {
           Task & Project Code Review
         </h1>
         <p className="text-sm text-gray-400 max-w-3xl">
-          Inspect student GitHub code repositories and live application deployments. Approve submissions to automatically grant XP and update competency analytics.
+          Inspect student GitHub code repositories, uploaded solution files, and live application deployments. Approve submissions to automatically grant XP and update competency analytics.
         </p>
       </div>
 
@@ -123,17 +125,33 @@ export const SubmissionsReview: React.FC = () => {
                 </Badge>
               </div>
 
-              {/* Links */}
+              {/* Links & Attachments */}
               <div className="flex flex-wrap items-center gap-3">
-                <a
-                  href={sub.githubUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="p-2.5 bg-[#181824] border border-[#272738] hover:border-purple-500 text-xs font-mono text-gray-200 hover:text-white rounded-md transition-all flex items-center space-x-2"
-                >
-                  <Code2 className="w-4 h-4 text-purple-400" />
-                  <span>Inspect GitHub Repository</span>
-                </a>
+                {sub.githubUrl && (
+                  <a
+                    href={sub.githubUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2.5 bg-[#181824] border border-[#272738] hover:border-purple-500 text-xs font-mono text-gray-200 hover:text-white rounded-md transition-all flex items-center space-x-2"
+                  >
+                    <Code2 className="w-4 h-4 text-purple-400" />
+                    <span>Inspect GitHub Repository</span>
+                  </a>
+                )}
+
+                {sub.uploadedFileUrl && (
+                  <a
+                    href={sub.uploadedFileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    download={sub.uploadedFileName || 'solution_file'}
+                    className="p-2.5 bg-purple-950/60 border border-purple-800 hover:border-purple-500 text-xs font-mono text-purple-200 hover:text-white rounded-md transition-all flex items-center space-x-2 cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4 text-purple-300" />
+                    <span>Download Solution File: {sub.uploadedFileName} ({sub.uploadedFileSize || 'File'})</span>
+                    <Download className="w-3.5 h-3.5 text-purple-300 ml-1" />
+                  </a>
+                )}
 
                 {sub.liveDemoUrl && (
                   <a
@@ -189,9 +207,20 @@ export const SubmissionsReview: React.FC = () => {
         title={`Review Submission: ${selectedSub?.targetTitle}`}
       >
         <div className="space-y-4">
-          <div className="p-3 bg-[#0a0a0e] border border-[#1f1f2a] rounded space-y-1 font-mono text-xs">
+          <div className="p-3 bg-[#0a0a0e] border border-[#1f1f2a] rounded space-y-1.5 font-mono text-xs">
             <div>Student: <span className="text-white font-bold">{selectedSub?.studentName}</span> ({selectedSub?.studentEmail})</div>
-            <div>GitHub: <a href={selectedSub?.githubUrl} target="_blank" rel="noreferrer" className="text-purple-400 underline">{selectedSub?.githubUrl}</a></div>
+            {selectedSub?.githubUrl && (
+              <div>GitHub: <a href={selectedSub.githubUrl} target="_blank" rel="noreferrer" className="text-purple-400 underline">{selectedSub.githubUrl}</a></div>
+            )}
+            {selectedSub?.uploadedFileName && selectedSub?.uploadedFileUrl && (
+              <div className="pt-1 flex items-center space-x-2">
+                <span>Solution File:</span>
+                <a href={selectedSub.uploadedFileUrl} download={selectedSub.uploadedFileName} target="_blank" rel="noreferrer" className="text-emerald-400 font-bold underline flex items-center space-x-1">
+                  <span>{selectedSub.uploadedFileName} ({selectedSub.uploadedFileSize})</span>
+                  <Download className="w-3 h-3 text-emerald-400" />
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="space-y-1">

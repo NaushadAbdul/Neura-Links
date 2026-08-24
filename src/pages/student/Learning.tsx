@@ -107,6 +107,14 @@ export const LearningHub: React.FC = () => {
                     const completedCount = moduleLessons.filter(l => profile?.completedLessonIds.includes(l.id)).length;
                     const isCompleted = profile?.completedModuleIds.includes(mod.id);
 
+                    const watchProgressMap = profile?.lessonWatchProgress || {};
+                    const totalWatchPercent = moduleLessons.reduce((sum, les) => {
+                      const isCompletedLes = profile?.completedLessonIds.includes(les.id);
+                      const watched = watchProgressMap[les.id] !== undefined ? watchProgressMap[les.id] : (isCompletedLes ? 100 : 0);
+                      return sum + Math.min(100, Math.max(0, watched));
+                    }, 0);
+                    const modWatchPercent = moduleLessons.length > 0 ? Math.round(totalWatchPercent / moduleLessons.length) : 0;
+
                     return (
                       <Card
                         key={mod.id}
@@ -135,7 +143,10 @@ export const LearningHub: React.FC = () => {
                         <div className="pt-4 border-t border-[#674846]/40 flex items-center justify-between">
                           <div className="font-mono text-xs text-gray-400 flex items-center space-x-2">
                             <BookOpen className="w-3.5 h-3.5 text-[#FFF8DC]" />
-                            <span>{completedCount} / {moduleLessons.length} Lessons</span>
+                            <span>
+                              {completedCount} / {moduleLessons.length} Lessons
+                              {modWatchPercent > 0 && <span className="text-[#FFF8DC] font-bold ml-1">({modWatchPercent}% Watched)</span>}
+                            </span>
                           </div>
 
                           <span className="font-heading text-xs uppercase tracking-wider text-[#FFF8DC] group-hover:text-white font-bold flex items-center space-x-1">

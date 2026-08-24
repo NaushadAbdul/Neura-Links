@@ -4,7 +4,20 @@ import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
 import { Tool, Resource } from '../../types';
-import { FolderKanban, Plus, Trash2, Edit2, Wrench, ExternalLink } from 'lucide-react';
+import {
+  FolderKanban,
+  Plus,
+  Trash2,
+  Edit2,
+  Wrench,
+  ExternalLink,
+  Upload,
+  FileText,
+  Link as LinkIcon,
+  FileUp,
+  X,
+  Video,
+} from 'lucide-react';
 
 export const ResourcesCMS: React.FC = () => {
   const {
@@ -22,15 +35,21 @@ export const ResourcesCMS: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'resources' | 'tools'>('resources');
 
-  // Resource modal
+  // Resource modal state
   const [resourceModalOpen, setResourceModalOpen] = useState(false);
   const [editingRes, setEditingRes] = useState<Resource | null>(null);
   const [resTitle, setResTitle] = useState('');
   const [resCat, setResCat] = useState<any>('Notes');
   const [resDesc, setResDesc] = useState('');
   const [resUrl, setResUrl] = useState('');
+  const [resYoutubeUrl, setResYoutubeUrl] = useState('');
 
-  // Tool modal
+  // PDF File Upload state
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfFileName, setPdfFileName] = useState('');
+  const [pdfFileSize, setPdfFileSize] = useState('');
+
+  // Tool modal state
   const [toolModalOpen, setToolModalOpen] = useState(false);
   const [editingTool, setEditingTool] = useState<Tool | null>(null);
   const [toolName, setToolName] = useState('');
@@ -46,14 +65,57 @@ export const ResourcesCMS: React.FC = () => {
       setResCat(res.category);
       setResDesc(res.description);
       setResUrl(res.url);
+      setResYoutubeUrl(res.youtubeUrl || '');
+      setPdfFile(null);
+      setPdfFileName(res.fileType?.includes('.pdf') ? res.fileType : '');
+      setPdfFileSize('');
     } else {
       setEditingRes(null);
       setResTitle('');
       setResCat('Notes');
       setResDesc('');
       setResUrl('');
+      setResYoutubeUrl('');
+      setPdfFile(null);
+      setPdfFileName('');
+      setPdfFileSize('');
     }
     setResourceModalOpen(true);
+  };
+
+  const handlePdfFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+      alert('Please select a valid PDF file (.pdf)');
+      return;
+    }
+
+    setPdfFile(file);
+    setPdfFileName(file.name);
+    setPdfFileSize((file.size / (1024 * 1024)).toFixed(2) + ' MB');
+    setResCat('PDFs');
+
+    if (!resTitle.trim()) {
+      setResTitle(file.name.replace(/\.pdf$/i, ''));
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setResUrl(dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePdf = () => {
+    setPdfFile(null);
+    setPdfFileName('');
+    setPdfFileSize('');
+    setResUrl('');
   };
 
   const handleOpenToolModal = (tool?: Tool) => {
@@ -79,21 +141,28 @@ export const ResourcesCMS: React.FC = () => {
     e.preventDefault();
     if (!resTitle.trim()) return;
 
+    const finalUrl = resUrl.trim() || '#';
+    const finalYoutubeUrl = resYoutubeUrl.trim();
+    const fileTypeInfo = pdfFileName ? `PDF (${pdfFileName})` : (resCat === 'PDFs' ? 'PDF Document' : 'Web Resource');
+
     if (editingRes) {
       updateResource({
         ...editingRes,
         title: resTitle.trim(),
         category: resCat,
         description: resDesc.trim(),
-        url: resUrl.trim(),
+        url: finalUrl,
+        youtubeUrl: finalYoutubeUrl,
+        fileType: fileTypeInfo,
       });
     } else {
       createResource({
         title: resTitle.trim(),
         category: resCat,
         description: resDesc.trim(),
-        url: resUrl.trim(),
-        fileType: 'PDF / Web Resource',
+        url: finalUrl,
+        youtubeUrl: finalYoutubeUrl,
+        fileType: fileTypeInfo,
         uploadedDate: new Date().toISOString().split('T')[0],
         author: 'Admin // NEURA',
         published: true,
@@ -132,7 +201,6 @@ export const ResourcesCMS: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-16">
-      {/* Title Header */}
       <div className="space-y-2 border-b border-[#2a2224] pb-6">
         <div className="font-inconsolata text-xs text-[#B38F6F] uppercase tracking-widest flex items-center space-x-2">
           <FolderKanban className="w-4 h-4 text-[#710014]" />
@@ -175,7 +243,6 @@ export const ResourcesCMS: React.FC = () => {
         </button>
       </div>
 
-      {/* Resources Tab */}
       {activeTab === 'resources' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {resources.map((r) => (
@@ -206,7 +273,6 @@ export const ResourcesCMS: React.FC = () => {
         </div>
       )}
 
-      {/* Tools Tab */}
       {activeTab === 'tools' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {tools.map((t) => (
@@ -238,7 +304,6 @@ export const ResourcesCMS: React.FC = () => {
         </div>
       )}
 
-      {/* Resource Modal */}
       <Modal isOpen={resourceModalOpen} onClose={() => setResourceModalOpen(false)} title={editingRes ? 'Edit Resource' : 'Add Study Resource'}>
         <form onSubmit={handleSaveResource} className="space-y-4">
           <div className="space-y-1">
@@ -269,16 +334,84 @@ export const ResourcesCMS: React.FC = () => {
             </select>
           </div>
 
-          <div className="space-y-1">
-            <label className="font-mono text-xs text-[#B38F6F] uppercase font-bold">Resource URL / File Link *</label>
+          <div className="space-y-1.5 p-3 bg-[#111116] border border-[#2a2224] rounded-lg">
+            <div className="flex items-center space-x-2">
+              <LinkIcon className="w-3.5 h-3.5 text-[#B38F6F]" />
+              <label className="font-mono text-xs text-[#B38F6F] uppercase font-bold">
+                Option 1 — Resource URL / File Link
+              </label>
+            </div>
             <input
-              type="url"
-              required
+              type="text"
               value={resUrl}
               onChange={(e) => setResUrl(e.target.value)}
-              placeholder="https://..."
-              className="w-full p-3 bg-[#161616] border border-[#2a2224] text-xs text-[#F2F1ED] font-inconsolata rounded-md outline-none"
+              placeholder="https://github.com/pandas-dev/pandas or web link"
+              className="w-full p-3 bg-[#161616] border border-[#2a2224] text-xs text-[#F2F1ED] font-inconsolata rounded-md outline-none focus:border-[#710014]"
             />
+            <span className="text-[10px] text-gray-500 font-mono block">
+              Paste an external web link, GitHub repository, documentation URL, or hosted file link.
+            </span>
+          </div>
+
+          <div className="space-y-2 p-3 bg-[#111116] border border-[#2a2224] rounded-lg">
+            <div className="flex items-center space-x-2">
+              <FileUp className="w-3.5 h-3.5 text-purple-400" />
+              <label className="font-mono text-xs text-purple-300 uppercase font-bold">
+                Option 2 — Upload PDF Document from Folders
+              </label>
+            </div>
+
+            {pdfFileName ? (
+              <div className="p-3 bg-purple-950/40 border border-purple-800/60 rounded-md flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <FileText className="w-4 h-4 text-purple-300 shrink-0" />
+                  <div className="text-xs font-mono">
+                    <div className="text-purple-200 font-bold truncate max-w-[220px]">{pdfFileName}</div>
+                    <div className="text-purple-400 text-[10px]">{pdfFileSize || 'Uploaded'} • PDF File</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemovePdf}
+                  className="p-1 text-gray-400 hover:text-red-400 rounded cursor-pointer"
+                  title="Remove PDF file"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center p-4 bg-[#161616] border-2 border-dashed border-[#2a2224] hover:border-purple-500/60 rounded-md cursor-pointer transition-all">
+                <Upload className="w-6 h-6 text-purple-400 mb-1" />
+                <span className="font-mono text-xs text-purple-300 font-bold">Click to select PDF from your folders</span>
+                <span className="font-mono text-[10px] text-gray-400">Supports .pdf files directly from your computer</span>
+                <input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={handlePdfFileSelect}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+
+          {/* SEPARATE OPTION 3: YOUTUBE VIDEO LINK */}
+          <div className="space-y-1.5 p-3 bg-[#111116] border border-[#2a2224] rounded-lg">
+            <div className="flex items-center space-x-2">
+              <Video className="w-3.5 h-3.5 text-red-400" />
+              <label className="font-mono text-xs text-red-300 uppercase font-bold">
+                Option 3 — YouTube Video Link (Optional)
+              </label>
+            </div>
+            <input
+              type="text"
+              value={resYoutubeUrl}
+              onChange={(e) => setResYoutubeUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=... or short link"
+              className="w-full p-3 bg-[#161616] border border-[#2a2224] text-xs text-[#F2F1ED] font-inconsolata rounded-md outline-none focus:border-red-600"
+            />
+            <span className="text-[10px] text-gray-500 font-mono block">
+              Add a YouTube video tutorial or lecture link for students.
+            </span>
           </div>
 
           <div className="space-y-1">

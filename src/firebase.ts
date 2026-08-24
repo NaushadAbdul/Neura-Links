@@ -13,9 +13,10 @@ import {
   signInWithRedirect,
   getRedirectResult,
   updateProfile,
+  deleteUser,
   User as FirebaseUser
 } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, doc, deleteDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
@@ -57,7 +58,11 @@ export {
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
-  updateProfile
+  updateProfile,
+  deleteUser,
+  doc,
+  deleteDoc
 };
 export type { FirebaseUser };
+
 

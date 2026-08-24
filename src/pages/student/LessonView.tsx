@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
+import { ProgressBar } from '../../components/common/ProgressBar';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -16,24 +17,155 @@ import {
   Check,
   ChevronRight,
   BookOpen,
+  Clock,
+  Tv,
+  ShieldCheck,
+  ShieldAlert,
+  AlertTriangle,
 } from 'lucide-react';
+
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: any;
+  }
+}
 
 export const LessonView: React.FC = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
-  const { lessons, modules, studentProfiles, markLessonComplete } = useData();
+  const { lessons, modules, studentProfiles, markLessonComplete, updateLessonWatchProgress } = useData();
   const { currentUser } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'notes' | 'code' | 'quiz' | 'resources'>('notes');
   const [selectedQuizAnswers, setSelectedQuizAnswers] = useState<Record<string, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [marked, setMarked] = useState(false);
+  const [showAntiCheatWarning, setShowAntiCheatWarning] = useState(false);
 
   const lessonItem = lessons.find(l => l.id === lessonId);
   const moduleItem = modules.find(m => m.id === lessonItem?.moduleId);
 
   const profile = currentUser ? studentProfiles[currentUser.id] : null;
   const isAlreadyCompleted = profile?.completedLessonIds.includes(lessonId || '');
+
+  // Current lesson watch percentage
+  const currentWatchPercent = profile?.lessonWatchProgress?.[lessonItem?.id || ''] !== undefined
+    ? profile.lessonWatchProgress[lessonItem?.id || '']
+    : (isAlreadyCompleted ? 100 : 0);
+
+  // Extract hours from module duration (default to 4 hours)
+  const durationMatch = moduleItem?.duration?.match(/(\d+(\.\d+)?)/);
+  const totalModuleHours = durationMatch ? parseFloat(durationMatch[1]) : 4;
+  const watchedHours = ((currentWatchPercent / 100) * totalModuleHours).toFixed(1);
+
+  // Anti-cheat YouTube Player State & Refs
+  const playerContainerRef = useRef<HTMLDivElement>(null);
+  const ytPlayerRef = useRef<any>(null);
+  const maxWatchedSecondsRef = useRef<number>(0);
+  const intervalRef = useRef<any>(null);
+
+  // Extract YouTube Video ID
+  const youtubeVideoId = React.useMemo(() => {
+    if (!lessonItem?.videoUrl) return '';
+    const embedMatch = lessonItem.videoUrl.match(/\/embed\/([a-zA-Z0-9_-]+)/);
+    if (embedMatch) return embedMatch[1];
+    const watchMatch = lessonItem.videoUrl.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+    if (watchMatch) return watchMatch[1];
+    const shortMatch = lessonItem.videoUrl.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+    if (shortMatch) return shortMatch[1];
+    return 'rfscVS0vtbw';
+  }, [lessonItem?.videoUrl]);
+
+  // Load YouTube Iframe API & Initialize Anti-Cheat Player
+  useEffect(() => {
+    if (!youtubeVideoId) return;
+
+    maxWatchedSecondsRef.current = 0;
+
+    const initPlayer = () => {
+      if (!playerContainerRef.current) return;
+
+      // Clear existing iframe if present
+      playerContainerRef.current.innerHTML = '<div id="yt-anti-cheat-player"></div>';
+
+      try {
+        ytPlayerRef.current = new window.YT.Player('yt-anti-cheat-player', {
+          height: '100%',
+          width: '100%',
+          videoId: youtubeVideoId,
+          playerVars: {
+            autoplay: 0,
+            controls: 1,
+            rel: 0,
+            modestbranding: 1,
+            enablejsapi: 1,
+          },
+          events: {
+            onStateChange: (event: any) => {
+              // Playing state (YT.PlayerState.PLAYING === 1)
+              if (event.data === 1) {
+                if (intervalRef.current) clearInterval(intervalRef.current);
+                intervalRef.current = setInterval(() => {
+                  if (!ytPlayerRef.current || typeof ytPlayerRef.current.getCurrentTime !== 'function') return;
+
+                  const currentTime = ytPlayerRef.current.getCurrentTime();
+                  const duration = ytPlayerRef.current.getDuration() || 1;
+
+                  // ANTI-CHEAT CHECK: User attempted forward seeking beyond maxWatchedSeconds + 2.5s
+                  if (currentTime > maxWatchedSecondsRef.current + 2.5) {
+                    ytPlayerRef.current.seekTo(maxWatchedSecondsRef.current, true);
+                    setShowAntiCheatWarning(true);
+                    setTimeout(() => setShowAntiCheatWarning(false), 4500);
+                  } else if (currentTime > maxWatchedSecondsRef.current) {
+                    maxWatchedSecondsRef.current = currentTime;
+
+                    // Update watch percentage based on actual continuous watch time
+                    const calculatedPercent = Math.min(100, Math.round((currentTime / duration) * 100));
+                    if (currentUser && lessonItem) {
+                      updateLessonWatchProgress(currentUser.id, lessonItem.id, calculatedPercent);
+                      if (calculatedPercent >= 98 && !isAlreadyCompleted && !marked) {
+                        markLessonComplete(currentUser.id, lessonItem.id, lessonItem.xpReward);
+                        setMarked(true);
+                      }
+                    }
+                  }
+                }, 500);
+              } else {
+                if (intervalRef.current) {
+                  clearInterval(intervalRef.current);
+                }
+              }
+            },
+          },
+        });
+      } catch (e) {
+        console.warn("YouTube Player Init error:", e);
+      }
+    };
+
+    if (window.YT && window.YT.Player) {
+      initPlayer();
+    } else {
+      const existingScript = document.getElementById('youtube-iframe-api-script');
+      if (!existingScript) {
+        const tag = document.createElement('script');
+        tag.id = 'youtube-iframe-api-script';
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.body.appendChild(tag);
+      }
+      window.onYouTubeIframeAPIReady = () => {
+        initPlayer();
+      };
+    }
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === 'function') {
+        try { ytPlayerRef.current.destroy(); } catch (e) {}
+      }
+    };
+  }, [youtubeVideoId, lessonItem?.id, currentUser?.id]);
 
   if (!lessonItem) {
     return (
@@ -49,6 +181,9 @@ export const LessonView: React.FC = () => {
   const handleMarkComplete = () => {
     if (!currentUser || isAlreadyCompleted || marked) return;
     markLessonComplete(currentUser.id, lessonItem.id, lessonItem.xpReward);
+    if (currentUser) {
+      updateLessonWatchProgress(currentUser.id, lessonItem.id, 100);
+    }
     setMarked(true);
   };
 
@@ -73,7 +208,7 @@ export const LessonView: React.FC = () => {
             <Zap className="w-4 h-4" />
             <span>+{lessonItem.xpReward} XP</span>
           </span>
-          {(isAlreadyCompleted || marked) && (
+          {(isAlreadyCompleted || marked || currentWatchPercent === 100) && (
             <Badge variant="green" className="flex items-center space-x-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Completed</span>
@@ -84,8 +219,13 @@ export const LessonView: React.FC = () => {
 
       {/* Lesson Title Header */}
       <div className="space-y-2">
-        <div className="font-mono text-xs text-purple-400 uppercase tracking-widest">
-          MODULE: {moduleItem?.title} • LESSON 0{lessonItem.order}
+        <div className="font-mono text-xs text-purple-400 uppercase tracking-widest flex items-center space-x-2">
+          <span>MODULE: {moduleItem?.title} • LESSON 0{lessonItem.order}</span>
+          {currentWatchPercent > 0 && (
+            <span className="px-2 py-0.5 text-[9px] font-mono font-bold bg-amber-950/80 text-amber-300 border border-amber-700/80 rounded-full">
+              {currentWatchPercent}% WATCHED
+            </span>
+          )}
         </div>
         <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white tracking-wide">
           {lessonItem.title}
@@ -110,16 +250,48 @@ export const LessonView: React.FC = () => {
         </div>
       )}
 
-      {/* Video Player Embed */}
+      {/* ANTI-CHEAT WARNING BANNER */}
+      {showAntiCheatWarning && (
+        <div className="p-3 bg-red-950/90 border-2 border-red-600 rounded-lg text-red-200 flex items-center space-x-3 text-xs font-mono font-bold shadow-[0_0_20px_rgba(220,38,38,0.5)] animate-bounce">
+          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+          <span>Anti-Cheat Protection: Forward video skipping is blocked! Please watch the course continuously to earn progress.</span>
+        </div>
+      )}
+
+      {/* Video Player Embed & Video Watch Time Tracker */}
       {lessonItem.videoUrl && (
-        <div className="w-full aspect-video bg-black rounded-lg border border-[#1f1f28] overflow-hidden shadow-2xl relative">
-          <iframe
-            src={lessonItem.videoUrl}
-            title={lessonItem.title}
-            className="w-full h-full border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+        <div className="space-y-3">
+          <div className="w-full aspect-video bg-black rounded-lg border border-[#1f1f28] overflow-hidden shadow-2xl relative">
+            <div ref={playerContainerRef} className="w-full h-full" />
+          </div>
+
+          {/* Anti-Cheat Realtime Video Watch Progress Controller */}
+          <div className="p-4 bg-[#14141a] border border-[#252535] rounded-lg space-y-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#222233] pb-2">
+              <div className="flex items-center space-x-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span className="font-mono text-xs font-bold text-white uppercase tracking-wide">
+                  Anti-Cheat Watch Protection Active
+                </span>
+              </div>
+              <div className="font-mono text-xs text-gray-300 flex items-center space-x-2">
+                <Clock className="w-3.5 h-3.5 text-amber-400" />
+                <span>
+                  Watched: <strong className="text-white">{watchedHours}</strong> / {totalModuleHours} Hrs ({currentWatchPercent}%)
+                </span>
+              </div>
+            </div>
+
+            <ProgressBar progress={currentWatchPercent} color="cornsilk" showPercentage={false} />
+
+            <div className="flex items-center justify-between text-[10px] font-mono text-gray-400 pt-1">
+              <span className="flex items-center space-x-1 text-emerald-400">
+                <CheckCircle2 className="w-3 h-3" />
+                <span>Forward dragging blocked</span>
+              </span>
+              <span>Progress updates automatically during playback</span>
+            </div>
+          </div>
         </div>
       )}
 

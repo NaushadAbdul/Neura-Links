@@ -27,6 +27,7 @@ export interface StudentProfile {
   completedTaskIds: string[];
   completedProjectIds: string[];
   unlockedAchievementIds: string[];
+  lessonWatchProgress?: Record<string, number>; // lessonId -> watchedPercent (0 - 100)
 }
 
 export interface UserAction {
@@ -35,7 +36,7 @@ export interface UserAction {
   userName: string;
   userEmail: string;
   userAvatar: string;
-  actionType: 'login' | 'lesson_completed' | 'submission_created' | 'xp_awarded' | 'profile_updated' | 'account_status_changed';
+  actionType: 'login' | 'lesson_completed' | 'submission_created' | 'xp_awarded' | 'profile_updated' | 'account_status_changed' | 'account_deleted';
   description: string;
   timestamp: string;
   metadata?: Record<string, any>;
@@ -121,6 +122,7 @@ export interface Resource {
   category: ResourceCategory;
   description: string;
   url: string;
+  youtubeUrl?: string;
   fileType?: string;
   uploadedDate: string;
   author: string;
@@ -178,7 +180,10 @@ export interface Submission {
   type: 'task' | 'project';
   targetId: string;
   targetTitle: string;
-  githubUrl: string;
+  githubUrl?: string;
+  uploadedFileUrl?: string;
+  uploadedFileName?: string;
+  uploadedFileSize?: string;
   liveDemoUrl?: string;
   documentation?: string;
   status: SubmissionStatus;

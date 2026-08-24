@@ -113,7 +113,6 @@ export function App() {
                     <Route path="/events" element={<NotificationsCenter />} />
                     <Route path="/announcements" element={<NotificationsCenter />} />
                     <Route path="/profile" element={<StudentProfileView />} />
-                    <Route path="/analysis" element={<StudentAnalyticsBoard />} />
                   </Route>
                 </Route>
               </Route>

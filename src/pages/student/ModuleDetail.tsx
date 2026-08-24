@@ -20,7 +20,21 @@ export const ModuleDetail: React.FC = () => {
 
   const profile = currentUser ? studentProfiles[currentUser.id] : null;
   const completedLessonCount = moduleLessons.filter(l => profile?.completedLessonIds.includes(l.id)).length;
-  const progressPercent = moduleLessons.length > 0 ? Math.round((completedLessonCount / moduleLessons.length) * 100) : 0;
+
+  // Calculate watching time progress across module lessons
+  const watchProgressMap = profile?.lessonWatchProgress || {};
+  const totalWatchPercent = moduleLessons.reduce((sum, les) => {
+    const isCompleted = profile?.completedLessonIds.includes(les.id);
+    const watched = watchProgressMap[les.id] !== undefined ? watchProgressMap[les.id] : (isCompleted ? 100 : 0);
+    return sum + Math.min(100, Math.max(0, watched));
+  }, 0);
+
+  const progressPercent = moduleLessons.length > 0 ? Math.round(totalWatchPercent / moduleLessons.length) : 0;
+
+  // Extract total hours from duration string (e.g. "4 Hours" -> 4)
+  const durationMatch = moduleItem?.duration?.match(/(\d+(\.\d+)?)/);
+  const totalHours = durationMatch ? parseFloat(durationMatch[1]) : 4;
+  const watchedHours = ((progressPercent / 100) * totalHours).toFixed(1);
 
   if (!moduleItem) {
     return (
@@ -68,7 +82,14 @@ export const ModuleDetail: React.FC = () => {
             </div>
             <div>
               <div className="font-mono text-[10px] text-gray-400 uppercase">Estimated Duration</div>
-              <div className="font-mono text-sm font-bold text-[#EFE9DC]">{moduleItem.duration}</div>
+              <div className="font-mono text-sm font-bold text-[#EFE9DC]">
+                {moduleItem.duration}
+                {progressPercent > 0 && (
+                  <span className="text-[#FFF8DC] font-mono text-xs block opacity-90">
+                    (Watched: {watchedHours} / {totalHours} Hrs)
+                  </span>
+                )}
+              </div>
             </div>
             <div>
               <div className="font-mono text-[10px] text-gray-400 uppercase">Module Progress</div>
@@ -90,6 +111,9 @@ export const ModuleDetail: React.FC = () => {
         <div className="space-y-3">
           {moduleLessons.map((les, index) => {
             const isCompleted = profile?.completedLessonIds.includes(les.id);
+            const lesWatchPercent = watchProgressMap[les.id] !== undefined 
+              ? watchProgressMap[les.id] 
+              : (isCompleted ? 100 : 0);
 
             return (
               <div
@@ -105,9 +129,21 @@ export const ModuleDetail: React.FC = () => {
                   </div>
 
                   <div>
-                    <h3 className="font-heading text-sm font-bold text-white tracking-wide group-hover:text-purple-300 transition-colors">
-                      {les.title}
-                    </h3>
+                    <div className="flex items-center space-x-2">
+                      <h3 className="font-heading text-sm font-bold text-white tracking-wide group-hover:text-purple-300 transition-colors">
+                        {les.title}
+                      </h3>
+                      {lesWatchPercent > 0 && lesWatchPercent < 100 && (
+                        <span className="px-2 py-0.5 text-[9px] font-mono font-bold bg-amber-950/80 text-amber-300 border border-amber-700/80 rounded-full">
+                          {lesWatchPercent}% WATCHED
+                        </span>
+                      )}
+                      {lesWatchPercent === 100 && (
+                        <span className="px-2 py-0.5 text-[9px] font-mono font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-700/80 rounded-full">
+                          100% WATCHED
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-400 line-clamp-1">
                       {les.description}
                     </p>
