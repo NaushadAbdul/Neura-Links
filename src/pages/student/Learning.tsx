@@ -140,15 +140,7 @@ export const LearningHub: React.FC = () => {
                           </p>
                         </div>
 
-                        <div className="pt-4 border-t border-[#674846]/40 flex items-center justify-between">
-                          <div className="font-mono text-xs text-gray-400 flex items-center space-x-2">
-                            <BookOpen className="w-3.5 h-3.5 text-[#FFF8DC]" />
-                            <span>
-                              {completedCount} / {moduleLessons.length} Lessons
-                              {modWatchPercent > 0 && <span className="text-[#FFF8DC] font-bold ml-1">({modWatchPercent}% Watched)</span>}
-                            </span>
-                          </div>
-
+                        <div className="pt-4 border-t border-[#674846]/40 flex items-center justify-end">
                           <span className="font-heading text-xs uppercase tracking-wider text-[#FFF8DC] group-hover:text-white font-bold flex items-center space-x-1">
                             <span>Open Resources</span>
                             <ArrowRight className="w-3.5 h-3.5 text-[#FFF8DC]" />
