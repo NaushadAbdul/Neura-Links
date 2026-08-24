@@ -4,10 +4,10 @@ import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
 import { RoadmapNode } from '../../types';
-import { GitFork, Plus, Edit2, Layers, CheckCircle2, Lock, PlayCircle } from 'lucide-react';
+import { GitFork, Plus, Edit2, Trash2 } from 'lucide-react';
 
 export const RoadmapCMS: React.FC = () => {
-  const { roadmapNodes, createRoadmapNode, updateRoadmapNode } = useData();
+  const { roadmapNodes, createRoadmapNode, updateRoadmapNode, deleteRoadmapNode } = useData();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingNode, setEditingNode] = useState<RoadmapNode | null>(null);
@@ -29,6 +29,15 @@ export const RoadmapCMS: React.FC = () => {
       setStatus('available');
     }
     setModalOpen(true);
+  };
+
+  const handleDeleteNode = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this roadmap step?')) {
+      deleteRoadmapNode(id);
+      if (editingNode?.id === id) {
+        setModalOpen(false);
+      }
+    }
   };
 
   const handleCycleStatus = (node: RoadmapNode) => {
@@ -127,7 +136,16 @@ export const RoadmapCMS: React.FC = () => {
 
             <p className="text-xs text-gray-400 font-inconsolata">{node.description}</p>
 
-            <div className="pt-2 border-t border-[#2a2224] flex justify-end">
+            <div className="pt-2 border-t border-[#2a2224] flex justify-end space-x-2">
+              <button
+                onClick={() => handleDeleteNode(node.id)}
+                className="p-1.5 bg-red-950/60 hover:bg-red-900 border border-red-800/80 text-red-300 font-heading text-xs uppercase rounded flex items-center space-x-1 cursor-pointer transition-colors"
+                title="Delete Roadmap Step"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                <span>Delete</span>
+              </button>
+
               <button
                 onClick={() => handleOpenModal(node)}
                 className="p-1.5 bg-[#161616] hover:bg-[#262626] border border-[#710014] text-[#F2F1ED] font-heading text-xs uppercase rounded flex items-center space-x-1 cursor-pointer"
@@ -184,20 +202,33 @@ export const RoadmapCMS: React.FC = () => {
             />
           </div>
 
-          <div className="pt-4 flex justify-end space-x-3 border-t border-[#2a2224]">
-            <button
-              type="button"
-              onClick={() => setModalOpen(false)}
-              className="px-4 py-2 bg-[#161616] hover:bg-[#252535] text-gray-300 font-heading text-xs uppercase rounded-md"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2 bg-[#710014] hover:bg-[#90001a] text-white font-heading text-xs uppercase font-bold rounded-md shadow-[0_0_15px_rgba(113,0,20,0.5)]"
-            >
-              Save Roadmap Node
-            </button>
+          <div className="pt-4 flex justify-between items-center border-t border-[#2a2224]">
+            {editingNode ? (
+              <button
+                type="button"
+                onClick={() => handleDeleteNode(editingNode.id)}
+                className="px-3 py-2 bg-red-950/80 hover:bg-red-900 border border-red-700/80 text-red-300 font-heading text-xs uppercase rounded-md flex items-center space-x-1.5 transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                <span>Delete Node</span>
+              </button>
+            ) : <div />}
+
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="px-4 py-2 bg-[#161616] hover:bg-[#252535] text-gray-300 font-heading text-xs uppercase rounded-md cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-[#710014] hover:bg-[#90001a] text-white font-heading text-xs uppercase font-bold rounded-md shadow-[0_0_15px_rgba(113,0,20,0.5)] cursor-pointer"
+              >
+                Save Roadmap Node
+              </button>
+            </div>
           </div>
         </form>
       </Modal>

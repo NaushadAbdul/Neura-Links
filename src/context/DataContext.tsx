@@ -147,6 +147,7 @@ interface DataContextType {
 
   createRoadmapNode: (node: Omit<RoadmapNode, 'id'>) => void;
   updateRoadmapNode: (node: RoadmapNode) => void;
+  deleteRoadmapNode: (id: string) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -940,10 +941,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createRoadmapNode = (data: Omit<RoadmapNode, 'id'>) => {
     const newNode: RoadmapNode = { ...data, id: `rm_${Date.now()}` };
     setRoadmapNodes(prev => [...prev, newNode]);
+    syncDocToFirestore('roadmapNodes', newNode.id, newNode);
   };
 
   const updateRoadmapNode = (data: RoadmapNode) => {
     setRoadmapNodes(prev => prev.map(n => n.id === data.id ? data : n));
+    syncDocToFirestore('roadmapNodes', data.id, data);
+  };
+
+  const deleteRoadmapNode = (id: string) => {
+    setRoadmapNodes(prev => prev.filter(n => n.id !== id));
+    removeDocFromFirestore('roadmapNodes', id);
   };
 
   // ADMIN ACTIONS - ACHIEVEMENTS
@@ -1028,6 +1036,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       createRoadmapNode,
       updateRoadmapNode,
+      deleteRoadmapNode,
     }}>
       {children}
     </DataContext.Provider>
