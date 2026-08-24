@@ -15,8 +15,8 @@ export const ModuleDetail: React.FC = () => {
 
   const moduleItem = modules.find(m => m.id === moduleId);
   const levelItem = levels.find(l => l.id === moduleItem?.levelId);
-  const moduleLessons = lessons.filter(l => l.moduleId === moduleId && l.published).sort((a, b) => a.order - b.order);
-  const moduleTasks = tasks.filter(t => t.moduleId === moduleId && t.published);
+  const moduleLessons = lessons.filter(l => l.moduleId === moduleId && l.published !== false).sort((a, b) => a.order - b.order);
+  const moduleTasks = tasks.filter(t => t.moduleId === moduleId && t.published !== false);
 
   const profile = currentUser ? studentProfiles[currentUser.id] : null;
   const completedLessonCount = moduleLessons.filter(l => profile?.completedLessonIds.includes(l.id)).length;
@@ -59,7 +59,7 @@ export const ModuleDetail: React.FC = () => {
       </button>
 
       {/* Header Banner */}
-      <div className="border border-[#706C61]/50 rounded-xl p-6 sm:p-8 bg-[#1c1c19] shadow-2xl space-y-4">
+      <div className="border border-[#706C61]/50 rounded-xl p-5 sm:p-8 bg-[#1c1c19] shadow-2xl space-y-4">
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="font-mono text-xs text-[#EFE9DC] uppercase tracking-widest font-bold">
@@ -71,7 +71,7 @@ export const ModuleDetail: React.FC = () => {
           <h1 className="font-bodoni text-2xl sm:text-4xl font-normal text-[#EFE9DC] tracking-wide">
             {moduleItem.title}
           </h1>
-          <p className="text-sm text-[#EFE9DC]/90 font-sans leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#EFE9DC]/90 font-sans leading-relaxed">
             {moduleItem.description}
           </p>
 
@@ -108,63 +108,78 @@ export const ModuleDetail: React.FC = () => {
           </h2>
         </div>
 
-        <div className="space-y-3">
-          {moduleLessons.map((les, index) => {
-            const isCompleted = profile?.completedLessonIds.includes(les.id);
-            const lesWatchPercent = watchProgressMap[les.id] !== undefined 
-              ? watchProgressMap[les.id] 
-              : (isCompleted ? 100 : 0);
+        {moduleLessons.length > 0 ? (
+          <div className="space-y-3">
+            {moduleLessons.map((les, index) => {
+              const isCompleted = profile?.completedLessonIds.includes(les.id);
+              const lesWatchPercent = watchProgressMap[les.id] !== undefined 
+                ? watchProgressMap[les.id] 
+                : (isCompleted ? 100 : 0);
 
-            return (
-              <div
-                key={les.id}
-                onClick={() => navigate(`/lesson/${les.id}`)}
-                className="p-4 bg-[#111116] border border-[#1f1f28] hover:border-purple-500/50 rounded-md cursor-pointer flex items-center justify-between group transition-all"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className={`w-8 h-8 rounded flex items-center justify-center font-mono font-bold text-xs ${
-                    isCompleted ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-[#181822] text-purple-300 border border-[#252535]'
-                  }`}>
-                    {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : index + 1}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-heading text-sm font-bold text-white tracking-wide group-hover:text-purple-300 transition-colors">
-                        {les.title}
-                      </h3>
-                      {lesWatchPercent > 0 && lesWatchPercent < 100 && (
-                        <span className="px-2 py-0.5 text-[9px] font-mono font-bold bg-amber-950/80 text-amber-300 border border-amber-700/80 rounded-full">
-                          {lesWatchPercent}% WATCHED
-                        </span>
-                      )}
-                      {lesWatchPercent === 100 && (
-                        <span className="px-2 py-0.5 text-[9px] font-mono font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-700/80 rounded-full">
-                          100% WATCHED
-                        </span>
-                      )}
+              return (
+                <div
+                  key={les.id}
+                  onClick={() => navigate(`/lesson/${les.id}`)}
+                  className="p-4 bg-[#111116] border border-[#1f1f28] hover:border-purple-500/50 rounded-md cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group transition-all"
+                >
+                  <div className="flex items-start sm:items-center space-x-3 sm:space-x-4">
+                    <div className={`w-8 h-8 shrink-0 rounded flex items-center justify-center font-mono font-bold text-xs ${
+                      isCompleted ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-[#181822] text-purple-300 border border-[#252535]'
+                    }`}>
+                      {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : index + 1}
                     </div>
-                    <p className="text-xs text-gray-400 line-clamp-1">
-                      {les.description}
-                    </p>
+
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-heading text-sm font-bold text-white tracking-wide group-hover:text-purple-300 transition-colors">
+                          {les.title}
+                        </h3>
+                        {lesWatchPercent > 0 && lesWatchPercent < 100 && (
+                          <span className="px-2 py-0.5 text-[9px] font-mono font-bold bg-amber-950/80 text-amber-300 border border-amber-700/80 rounded-full">
+                            {lesWatchPercent}% WATCHED
+                          </span>
+                        )}
+                        {lesWatchPercent === 100 && (
+                          <span className="px-2 py-0.5 text-[9px] font-mono font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-700/80 rounded-full">
+                            100% WATCHED
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 line-clamp-2 sm:line-clamp-1">
+                        {les.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end space-x-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#1f1f28]">
+                    <span className="font-mono text-xs text-yellow-400 font-bold flex items-center space-x-1">
+                      <Zap className="w-3.5 h-3.5 text-[#EFE9DC]" />
+                      <span>+{les.xpReward} XP</span>
+                    </span>
+
+                    <button className="bg-purple-950/60 hover:bg-purple-900 border border-purple-800 text-purple-300 font-heading text-xs uppercase tracking-wider py-1.5 px-4 rounded transition-colors flex items-center space-x-1 cursor-pointer">
+                      <PlayCircle className="w-3.5 h-3.5" />
+                      <span>{isCompleted ? 'Review' : 'Start'}</span>
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex items-center space-x-4">
-                  <span className="font-mono text-xs text-yellow-400 font-bold flex items-center space-x-1">
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>+{les.xpReward} XP</span>
-                  </span>
-
-                  <button className="bg-purple-950/60 hover:bg-purple-900 border border-purple-800 text-purple-300 font-heading text-xs uppercase tracking-wider py-1.5 px-3 rounded transition-colors flex items-center space-x-1">
-                    <PlayCircle className="w-3.5 h-3.5" />
-                    <span>{isCompleted ? 'Review' : 'Start'}</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-8 text-center text-gray-400 font-mono text-xs bg-[#111116] border border-[#1f1f28] rounded-md space-y-3">
+            <div className="text-gray-200 font-bold text-sm">No published lessons available for this module yet.</div>
+            <p className="text-[11px] text-gray-400 max-w-md mx-auto">
+              Our instructors are actively adding new learning content. Please check back soon or browse active modules in the Learning Hub.
+            </p>
+            <button
+              onClick={() => navigate('/learning')}
+              className="px-4 py-2 bg-[#674846] hover:bg-[#7e5957] text-[#FFF8DC] font-heading uppercase text-xs rounded-md transition-all cursor-pointer shadow-md inline-block mt-2 font-bold"
+            >
+              Return to Learning Hub
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Module Related Tasks */}
