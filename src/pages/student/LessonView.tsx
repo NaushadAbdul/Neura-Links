@@ -196,11 +196,11 @@ export const LessonView: React.FC = () => {
       {/* Top Nav Breadcrumb */}
       <div className="flex items-center justify-between border-b border-[#1f1f28] pb-4">
         <button
-          onClick={() => navigate(`/learning/${lessonItem.moduleId}`)}
+          onClick={() => navigate('/resources')}
           className="font-mono text-xs text-gray-400 hover:text-white flex items-center space-x-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Module: {moduleItem?.title || 'Module'}</span>
+          <span>Back to Resources</span>
         </button>
 
         <div className="flex items-center space-x-3">

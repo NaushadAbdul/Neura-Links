@@ -100,7 +100,7 @@ export function App() {
                   <Route element={<StudentLayout />}>
                     <Route path="/dashboard" element={<StudentDashboard />} />
                     <Route path="/learning" element={<LearningHub />} />
-                    <Route path="/learning/:moduleId" element={<ModuleDetail />} />
+                    <Route path="/learning/:moduleId" element={<Navigate to="/resources" replace />} />
                     <Route path="/learning/:moduleId/:lessonId" element={<LessonView />} />
                     <Route path="/lesson/:lessonId" element={<LessonView />} />
                     <Route path="/tools" element={<ToolsDirectory />} />

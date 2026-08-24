@@ -193,7 +193,7 @@ export const StudentDashboard: React.FC = () => {
               <div className="flex items-center justify-between pt-2">
                 <span className="font-mono text-xs text-gray-400">Est duration: {activeModule.duration}</span>
                 <button
-                  onClick={() => navigate(`/learning/${activeModule.id}`)}
+                  onClick={() => navigate('/resources')}
                   className="bg-[#674846] hover:bg-[#7e5957] text-[#FFF8DC] border border-[#FFF8DC]/40 font-heading text-xs uppercase tracking-wider font-bold py-2 px-4 rounded-md transition-all shadow-[0_0_15px_rgba(103,72,70,0.4)] flex items-center space-x-2 cursor-pointer"
                 >
                   <span>Continue Learning →</span>
