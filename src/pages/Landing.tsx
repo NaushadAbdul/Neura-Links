@@ -302,8 +302,13 @@ export const Landing: React.FC = () => {
               </div>
 
               {errorMsg && (
-                <div className="p-3 bg-[#706C61]/80 border border-[#EFE9DC]/40 text-[#EFE9DC] text-xs rounded-md text-left font-inconsolata font-semibold">
-                  {errorMsg}
+                <div className="p-3 bg-[#706C61]/80 border border-[#EFE9DC]/40 text-[#EFE9DC] text-xs rounded-md text-left font-inconsolata font-semibold space-y-1">
+                  <div>{errorMsg}</div>
+                  {errorMsg.includes('unauthorized-domain') && (
+                    <div className="text-[11px] text-amber-200 pt-1">
+                      💡 <strong>Action Required:</strong> Add <code>neuralinks.vercel.app</code> to <em>Firebase Console → Authentication → Settings → Authorized domains</em>.
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -317,6 +322,59 @@ export const Landing: React.FC = () => {
               </button>
             </form>
 
+            {/* Quick Demo Access Bar */}
+            <div className="pt-3 border-t border-[#674846]/40 space-y-2">
+              <div className="font-mono text-[10px] text-[#FFF8DC]/70 uppercase tracking-widest text-center font-bold">
+                ⚡ Quick Demo Access (Instant Login)
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const demoAdmin: any = {
+                      id: 'user_admin_01',
+                      name: 'Naushad Abdul (Admin)',
+                      email: 'naushadabdul2006@gmail.com',
+                      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+                      role: 'admin',
+                      status: 'active',
+                      joinedDate: '2026-01-01',
+                      authProvider: 'google',
+                    };
+                    sessionStorage.setItem('nlbc_tab_user', JSON.stringify(demoAdmin));
+                    localStorage.setItem('nlbc_current_user', JSON.stringify(demoAdmin));
+                    window.location.href = '/admin';
+                  }}
+                  className="px-3 py-2 bg-[#674846]/80 hover:bg-[#674846] text-[#FFF8DC] border border-[#FFF8DC]/40 font-heading text-[11px] uppercase tracking-wider font-bold rounded transition-all cursor-pointer flex items-center justify-center space-x-1"
+                >
+                  <Shield className="w-3.5 h-3.5 text-[#FFF8DC]" />
+                  <span>Demo Admin</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const demoStudent: any = {
+                      id: 'user_student_01',
+                      name: 'Naushad Abdul',
+                      email: 'naushad@neuralinks.club',
+                      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+                      role: 'student',
+                      status: 'active',
+                      joinedDate: '2026-01-15',
+                      authProvider: 'google',
+                    };
+                    sessionStorage.setItem('nlbc_tab_user', JSON.stringify(demoStudent));
+                    localStorage.setItem('nlbc_current_user', JSON.stringify(demoStudent));
+                    window.location.href = '/dashboard';
+                  }}
+                  className="px-3 py-2 bg-[#141414] hover:bg-[#222222] text-[#FFF8DC] border border-[#FFF8DC]/40 font-heading text-[11px] uppercase tracking-wider font-bold rounded transition-all cursor-pointer flex items-center justify-center space-x-1"
+                >
+                  <Zap className="w-3.5 h-3.5 text-yellow-400" />
+                  <span>Demo Student</span>
+                </button>
+              </div>
+            </div>
           </motion.div>
         )}
 
