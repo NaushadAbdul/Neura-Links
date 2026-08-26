@@ -12,7 +12,7 @@ if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder('ipv4first');
 }
 
-const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://dekuofficiaal734_db_user:So6E27e6vUJJC4LK@cluster0.w9rnqlz.mongodb.net/neura_links_club?retryWrites=true&w=majority';
+const mongoUri = process.env.MONGODB_URI;
 
 async function setPrimaryAdminAccount() {
   try {

@@ -20,9 +20,9 @@ import { getFirestore, doc, deleteDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
-// Provided Firebase configuration
+// Firebase configuration from environment variables
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyC8WZkOZvcsR3W3ZU2rvXwGp9idiY8eLqU",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "club-b35f3.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "club-b35f3",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "club-b35f3.firebasestorage.app",

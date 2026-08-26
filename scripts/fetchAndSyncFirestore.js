@@ -15,7 +15,7 @@ if (dns.setDefaultResultOrder) {
 }
 
 const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY || "AIzaSyC8WZkOZvcsR3W3ZU2rvXwGp9idiY8eLqU",
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
   authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || "club-b35f3.firebaseapp.com",
   projectId: process.env.VITE_FIREBASE_PROJECT_ID || "club-b35f3",
   storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || "club-b35f3.firebasestorage.app",
@@ -26,7 +26,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://dekuofficiaal734_db_user:So6E27e6vUJJC4LK@cluster0.w9rnqlz.mongodb.net/neura_links_club?retryWrites=true&w=majority';
+const mongoUri = process.env.MONGODB_URI;
 
 async function syncAllFirestoreUsersToMongo() {
   try {

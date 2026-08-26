@@ -14,11 +14,13 @@ try {
   console.warn('DNS server configuration notice:', dnsErr);
 }
 
-const DEFAULT_MONGO_URI = 'mongodb+srv://dekuofficiaal734_db_user:So6E27e6vUJJC4LK@cluster0.w9rnqlz.mongodb.net/neura_links_club?retryWrites=true&w=majority';
-
 export const connectDB = async () => {
   try {
-    const uri = process.env.MONGODB_URI || DEFAULT_MONGO_URI;
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+      console.warn('⚠️ MONGODB_URI environment variable is missing.');
+      return null;
+    }
     const conn = await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 8000,
     });

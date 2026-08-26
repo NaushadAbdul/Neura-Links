@@ -12,7 +12,7 @@ if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder('ipv4first');
 }
 
-const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://dekuofficiaal734_db_user:So6E27e6vUJJC4LK@cluster0.w9rnqlz.mongodb.net/neura_links_club?retryWrites=true&w=majority';
+const mongoUri = process.env.MONGODB_URI;
 
 const INITIAL_USERS = [
   { id: 'user_admin_01', name: 'Naushad Abdul (Admin)', email: 'naushadabdul2006@gmail.com', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', role: 'admin', status: 'active', joinedDate: '2026-01-01', authProvider: 'google' },

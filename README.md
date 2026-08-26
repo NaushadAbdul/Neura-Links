@@ -146,13 +146,13 @@ Your project configuration is located in the root file **.env**:
 
 ```env
 # MongoDB Atlas Database URI
-MONGODB_URI=mongodb+srv://dekuofficiaal734_db_user:So6E27e6vUJJC4LK@cluster0.w9rnqlz.mongodb.net/neura_links_club?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://YOUR_DB_USER:YOUR_DB_PASSWORD@cluster0.example.mongodb.net/neuralinks?retryWrites=true&w=majority
 
 # Express Backend Server Port
 PORT=5000
 
-# Firebase Authentication (Active)
-VITE_FIREBASE_API_KEY=AIzaSyC8WZkOZvcsR3W3ZU2rvXwGp9idiY8eLqU
+# Firebase Authentication Configuration
+VITE_FIREBASE_API_KEY=YOUR_FIREBASE_API_KEY
 VITE_FIREBASE_AUTH_DOMAIN=club-b35f3.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=club-b35f3
 VITE_FIREBASE_STORAGE_BUCKET=club-b35f3.firebasestorage.app
