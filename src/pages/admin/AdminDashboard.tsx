@@ -56,12 +56,17 @@ export const AdminDashboard: React.FC = () => {
       const fetched = await fetchAllFirestoreUsers(users, submissions);
       if (mounted) {
         const cleaned = fetched.filter(u =>
+          u.id !== 'user_admin_01' &&
           u.id !== 'user_student_01' &&
           u.id !== 'user_student_02' &&
           u.email !== 'naushad@neuralinks.club' &&
           u.email !== 'rahul@neuralinks.club'
         );
-        setFirestoreUsers(cleaned);
+        const emailMap = new Map<string, FirestoreUserData>();
+        cleaned.forEach(u => {
+          if (u.email) emailMap.set(u.email.toLowerCase(), u);
+        });
+        setFirestoreUsers(Array.from(emailMap.values()));
         setLoadingUsers(false);
       }
     }

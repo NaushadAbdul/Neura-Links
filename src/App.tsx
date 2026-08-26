@@ -124,6 +124,7 @@ export function App() {
                     <Route path="/admin" element={<AdminDashboard />} />
                     <Route path="/admin/students" element={<StudentMgmt />} />
                     <Route path="/admin/courses" element={<ContentCMS />} />
+                    <Route path="/admin/levels" element={<ContentCMS />} />
                     <Route path="/admin/modules" element={<ContentCMS />} />
                     <Route path="/admin/lessons" element={<ContentCMS />} />
                     <Route path="/admin/resources" element={<ResourcesCMS />} />

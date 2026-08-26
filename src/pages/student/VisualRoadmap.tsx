@@ -41,6 +41,17 @@ export const VisualRoadmap: React.FC = () => {
         </p>
       </div>
 
+      {/* Empty State */}
+      {sortedNodes.length === 0 && (
+        <div className="p-12 text-center bg-[#161616] border border-[#674846]/40 rounded-md space-y-3 max-w-2xl mx-auto">
+          <Map className="w-10 h-10 text-[#674846] mx-auto" />
+          <h3 className="font-cornsilk text-xl text-[#FFF8DC] uppercase">No Roadmap Steps Configured Yet</h3>
+          <p className="text-xs text-gray-400 font-sans max-w-md mx-auto">
+            There are currently no visual roadmap steps created. Once administrators define roadmap steps, they will appear here.
+          </p>
+        </div>
+      )}
+
       {/* Visual Roadmap Path */}
       <div className="max-w-2xl mx-auto space-y-6 relative">
         {/* Connecting central vertical line */}

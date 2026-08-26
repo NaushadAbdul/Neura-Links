@@ -20,7 +20,28 @@ export const StudentMgmt: React.FC = () => {
 
   const studentUsers = users.filter(u => u.role === 'student');
 
-  const filteredStudents = studentUsers.filter(s => {
+  // Strict single-account safeguard: Deduplicate student users by normalized lowercase email
+  const uniqueStudentUsers = Array.from(
+    studentUsers.reduce((map, u) => {
+      const emailKey = u.email ? u.email.toLowerCase() : '';
+      if (!emailKey) return map;
+
+      if (!map.has(emailKey)) {
+        map.set(emailKey, u);
+      } else {
+        const existing = map.get(emailKey)!;
+        const existingXp = studentProfiles[existing.id]?.xp || 0;
+        const currentXp = studentProfiles[u.id]?.xp || 0;
+        // Keep the user record that has accumulated student XP or is Google authenticated
+        if (currentXp > existingXp || (currentXp === existingXp && u.authProvider === 'google')) {
+          map.set(emailKey, u);
+        }
+      }
+      return map;
+    }, new Map<string, User>()).values()
+  );
+
+  const filteredStudents = uniqueStudentUsers.filter(s => {
     const matchesStatus = statusFilter === 'ALL' || s.status === statusFilter;
     const matchesQuery =
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

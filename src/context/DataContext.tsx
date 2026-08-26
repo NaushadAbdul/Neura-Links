@@ -158,17 +158,52 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (key === 'users' && Array.isArray(parsed)) {
-          const cleanedUsers = parsed.filter((u: any) =>
-            u.id !== 'user_admin_01' &&
-            u.id !== 'user_student_01' &&
-            u.id !== 'user_student_02' &&
-            u.email !== 'admin@neuralinks.club' &&
-            u.email !== 'naushad@neuralinks.club' &&
-            u.email !== 'rahul@neuralinks.club'
-          );
-          if (typeof window !== 'undefined') localStorage.setItem('nlbc_users', JSON.stringify(cleanedUsers));
-          return cleanedUsers as unknown as T;
+        if (Array.isArray(parsed)) {
+          const cleaned = parsed.filter((item: any) => {
+            if (!item || typeof item !== 'object') return false;
+            const id = item.id || '';
+            if (
+              id.startsWith('res_0') ||
+              id.startsWith('mod_py_') ||
+              id.startsWith('mod_ds_') ||
+              id.startsWith('mod_ml_') ||
+              id.startsWith('mod_genai_') ||
+              id.startsWith('les_py_') ||
+              id.startsWith('les_ml_') ||
+              id.startsWith('lvl_0') ||
+              id.startsWith('tool_0') ||
+              id.startsWith('rm_0') ||
+              id.startsWith('task_0') ||
+              id.startsWith('proj_0') ||
+              id.startsWith('ach_0') ||
+              id.startsWith('ann_0') ||
+              id.startsWith('notif_0')
+            ) {
+              return false;
+            }
+            return true;
+          });
+
+          if (key === 'users') {
+            const cleanedUsers = cleaned.filter((u: any) =>
+              u.id !== 'user_admin_01' &&
+              u.id !== 'user_student_01' &&
+              u.id !== 'user_student_02' &&
+              u.email !== 'admin@neuralinks.club' &&
+              u.email !== 'naushad@neuralinks.club' &&
+              u.email !== 'rahul@neuralinks.club'
+            );
+            const emailMap = new Map<string, any>();
+            cleanedUsers.forEach((u: any) => {
+              if (u.email) emailMap.set(u.email.toLowerCase(), u);
+            });
+            const dedupedUsers = Array.from(emailMap.values());
+            if (typeof window !== 'undefined') localStorage.setItem('nlbc_users', JSON.stringify(dedupedUsers));
+            return dedupedUsers as unknown as T;
+          }
+
+          if (typeof window !== 'undefined') localStorage.setItem(`nlbc_${key}`, JSON.stringify(cleaned));
+          return cleaned as unknown as T;
         }
         if (key === 'studentProfiles' && typeof parsed === 'object' && parsed !== null) {
           delete parsed['user_student_01'];
@@ -298,62 +333,56 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
           setUsers(prev => {
-            const userMap = new Map<string, User>();
-            INITIAL_USERS.forEach(u => userMap.set(u.id, u));
-            prev.forEach(u => userMap.set(u.id, u));
-            fetchedUsers.forEach(u => userMap.set(u.id, u));
-            return Array.from(userMap.values());
+            const emailMap = new Map<string, User>();
+            prev.forEach(u => {
+              if (u.email) emailMap.set(u.email.toLowerCase(), u);
+            });
+            fetchedUsers.forEach(u => {
+              if (u.email) emailMap.set(u.email.toLowerCase(), u);
+            });
+            return Array.from(emailMap.values());
           });
         }
       }));
 
+      unsubs.push(onSnapshot(collection(db, 'levels'), (snapshot) => {
+        const items = snapshot.docs.map(d => d.data() as Level);
+        setLevels(items);
+      }));
+
       unsubs.push(onSnapshot(collection(db, 'modules'), (snapshot) => {
-        if (!snapshot.empty) {
-          const items = snapshot.docs.map(d => d.data() as Module);
-          setModules(prev => mergeCollections(prev, items));
-        }
+        const items = snapshot.docs.map(d => d.data() as Module);
+        setModules(items);
       }));
 
       unsubs.push(onSnapshot(collection(db, 'lessons'), (snapshot) => {
-        if (!snapshot.empty) {
-          const items = snapshot.docs.map(d => d.data() as Lesson);
-          setLessons(prev => mergeCollections(prev, items));
-        }
+        const items = snapshot.docs.map(d => d.data() as Lesson);
+        setLessons(items);
       }));
 
       unsubs.push(onSnapshot(collection(db, 'tasks'), (snapshot) => {
-        if (!snapshot.empty) {
-          const items = snapshot.docs.map(d => d.data() as Task);
-          setTasks(prev => mergeCollections(prev, items));
-        }
+        const items = snapshot.docs.map(d => d.data() as Task);
+        setTasks(items);
       }));
 
       unsubs.push(onSnapshot(collection(db, 'projects'), (snapshot) => {
-        if (!snapshot.empty) {
-          const items = snapshot.docs.map(d => d.data() as Project);
-          setProjects(prev => mergeCollections(prev, items));
-        }
+        const items = snapshot.docs.map(d => d.data() as Project);
+        setProjects(items);
       }));
 
       unsubs.push(onSnapshot(collection(db, 'tools'), (snapshot) => {
-        if (!snapshot.empty) {
-          const items = snapshot.docs.map(d => d.data() as Tool);
-          setTools(prev => mergeCollections(prev, items));
-        }
+        const items = snapshot.docs.map(d => d.data() as Tool);
+        setTools(items);
       }));
 
       unsubs.push(onSnapshot(collection(db, 'resources'), (snapshot) => {
-        if (!snapshot.empty) {
-          const items = snapshot.docs.map(d => d.data() as Resource);
-          setResources(prev => mergeCollections(prev, items));
-        }
+        const items = snapshot.docs.map(d => d.data() as Resource);
+        setResources(items);
       }));
 
       unsubs.push(onSnapshot(collection(db, 'announcements'), (snapshot) => {
-        if (!snapshot.empty) {
-          const items = snapshot.docs.map(d => d.data() as Announcement);
-          setAnnouncements(prev => mergeCollections(prev, items));
-        }
+        const items = snapshot.docs.map(d => d.data() as Announcement);
+        setAnnouncements(items);
       }));
 
       return () => unsubs.forEach(fn => fn());
@@ -373,16 +402,29 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // REGISTER GOOGLE AUTH USER
   const registerGoogleUser = (googleUser: User) => {
-    // Add user if not exists
+    const userEmailLower = googleUser.email.toLowerCase();
+
+    // Add or update user record, deduplicated by email
     setUsers(prev => {
-      const exists = prev.some(u => u.email.toLowerCase() === googleUser.email.toLowerCase());
-      if (exists) return prev;
-      return [...prev, { ...googleUser, authProvider: 'google' }];
+      const emailMap = new Map<string, User>();
+      prev.forEach(u => {
+        if (u.email) emailMap.set(u.email.toLowerCase(), u);
+      });
+      emailMap.set(userEmailLower, {
+        ...googleUser,
+        authProvider: 'google',
+      });
+      return Array.from(emailMap.values());
     });
 
-    // Add profile if not exists
+    // Add profile if not exists, maintaining XP progress across devices
     setStudentProfiles(prev => {
       if (prev[googleUser.id]) return prev;
+
+      // Check if profile exists under a different ID for the same email
+      const existingKey = Object.keys(prev).find(k => prev[k]?.userId === googleUser.id);
+      if (existingKey) return prev;
+
       return {
         ...prev,
         [googleUser.id]: {

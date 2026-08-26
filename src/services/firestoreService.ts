@@ -36,24 +36,23 @@ export async function fetchAllFirestoreUsers(
       }
     }
 
-    // Combine with local mock users to ensure seamless demo & fallback
-    const resultList: FirestoreUserData[] = [];
-    const processedIds = new Set<string>();
+    // Combine with local mock users to ensure seamless demo & fallback deduplicated by email
+    const emailMap = new Map<string, FirestoreUserData>();
 
     // Add Firestore fetched users (excluding demo admin)
     Object.values(firestoreUsersMap).forEach(u => {
       if (u.id !== 'user_admin_01' && u.email !== 'admin@neuralinks.club') {
-        processedIds.add(u.id);
-        resultList.push(u);
+        emailMap.set(u.email.toLowerCase(), u);
       }
     });
 
-    // Merge in localUsers if not already present
+    // Merge in localUsers if email not already present
     localUsers.forEach(u => {
-      if (!processedIds.has(u.id) && u.id !== 'user_admin_01' && u.email !== 'admin@neuralinks.club') {
-        const userSubmissions = submissions.filter(s => s.studentId === u.id);
+      const emailLower = u.email ? u.email.toLowerCase() : '';
+      if (emailLower && !emailMap.has(emailLower) && u.id !== 'user_admin_01' && u.email !== 'admin@neuralinks.club') {
+        const userSubmissions = submissions.filter(s => s.studentId === u.id || s.studentEmail?.toLowerCase() === emailLower);
         
-        resultList.push({
+        emailMap.set(emailLower, {
           id: u.id,
           email: u.email,
           name: u.name,
@@ -65,7 +64,7 @@ export async function fetchAllFirestoreUsers(
       }
     });
 
-    return resultList;
+    return Array.from(emailMap.values());
   } catch (error) {
     console.warn("Firestore fetch notice:", error);
     

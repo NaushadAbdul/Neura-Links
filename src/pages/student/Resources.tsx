@@ -94,6 +94,17 @@ export const ResourcesCatalog: React.FC = () => {
         </div>
       </div>
 
+      {/* Empty State */}
+      {filteredResources.length === 0 && (
+        <div className="p-12 text-center bg-[#161616] border border-[#674846]/40 rounded-md space-y-3">
+          <FolderGit2 className="w-10 h-10 text-[#674846] mx-auto" />
+          <h3 className="font-cornsilk text-xl text-[#FFF8DC] uppercase">No Materials Published Yet</h3>
+          <p className="text-xs text-gray-400 font-sans max-w-md mx-auto">
+            There are currently no learning resources published. Once administrators upload notes, cheat sheets, papers, or videos, they will appear here.
+          </p>
+        </div>
+      )}
+
       {/* Resource Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredResources.map((res) => (

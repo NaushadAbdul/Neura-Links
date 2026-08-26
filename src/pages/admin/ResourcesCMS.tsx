@@ -244,64 +244,80 @@ export const ResourcesCMS: React.FC = () => {
       </div>
 
       {activeTab === 'resources' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {resources.map((r) => (
-            <Card key={r.id} className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Badge variant="purple">{r.category}</Badge>
-                <button onClick={() => toggleResourcePublish(r.id)} className="cursor-pointer">
-                  {r.published ? <Badge variant="green">Published</Badge> : <Badge variant="red">Hidden</Badge>}
-                </button>
-              </div>
-
-              <h3 className="font-heading text-base font-bold text-[#F2F1ED]">{r.title}</h3>
-              <p className="text-xs text-gray-400 font-inconsolata">{r.description}</p>
-
-              <div className="pt-2 border-t border-[#2a2224] flex justify-between items-center text-xs font-inconsolata">
-                <span className="text-gray-500">By {r.author}</span>
-                <div className="flex space-x-2">
-                  <button onClick={() => handleOpenResModal(r)} className="p-1.5 bg-[#161616] hover:bg-[#262626] border border-[#710014] text-[#F2F1ED] rounded cursor-pointer">
-                    <Edit2 className="w-3.5 h-3.5 text-[#B38F6F]" />
-                  </button>
-                  <button onClick={() => deleteResource(r.id)} className="p-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded cursor-pointer">
-                    <Trash2 className="w-3.5 h-3.5" />
+        resources.length === 0 ? (
+          <div className="p-12 text-center bg-[#161616] border border-[#2a2224] rounded-md space-y-2">
+            <FolderKanban className="w-10 h-10 text-[#710014] mx-auto opacity-80" />
+            <div className="text-[#F2F1ED] font-bold">No Resource Materials Published</div>
+            <p className="text-xs text-gray-500 font-inconsolata">Click "Add New Resource" above to publish notes, PDFs, research papers, cheat sheets, or YouTube videos.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {resources.map((r) => (
+              <Card key={r.id} className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <Badge variant="purple">{r.category}</Badge>
+                  <button onClick={() => toggleResourcePublish(r.id)} className="cursor-pointer">
+                    {r.published ? <Badge variant="green">Published</Badge> : <Badge variant="red">Hidden</Badge>}
                   </button>
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+
+                <h3 className="font-heading text-base font-bold text-[#F2F1ED]">{r.title}</h3>
+                <p className="text-xs text-gray-400 font-inconsolata">{r.description}</p>
+
+                <div className="pt-2 border-t border-[#2a2224] flex justify-between items-center text-xs font-inconsolata">
+                  <span className="text-gray-500">By {r.author}</span>
+                  <div className="flex space-x-2">
+                    <button onClick={() => handleOpenResModal(r)} className="p-1.5 bg-[#161616] hover:bg-[#262626] border border-[#710014] text-[#F2F1ED] rounded cursor-pointer">
+                      <Edit2 className="w-3.5 h-3.5 text-[#B38F6F]" />
+                    </button>
+                    <button onClick={() => deleteResource(r.id)} className="p-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded cursor-pointer">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )
       )}
 
       {activeTab === 'tools' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {tools.map((t) => (
-            <Card key={t.id} className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Badge variant="cyan">{t.category}</Badge>
-                <button onClick={() => toggleToolPublish(t.id)} className="cursor-pointer">
-                  {t.published ? <Badge variant="green">Published</Badge> : <Badge variant="red">Hidden</Badge>}
-                </button>
-              </div>
-
-              <h3 className="font-heading text-base font-bold text-[#F2F1ED]">{t.name}</h3>
-              <p className="text-xs text-gray-400 font-inconsolata">{t.description}</p>
-              <div className="text-xs text-[#B38F6F] font-inconsolata">Use Case: {t.useCase}</div>
-
-              <div className="pt-2 border-t border-[#2a2224] flex justify-between items-center text-xs font-inconsolata">
-                <span className="text-gray-500">{t.skillLevel}</span>
-                <div className="flex space-x-2">
-                  <button onClick={() => handleOpenToolModal(t)} className="p-1.5 bg-[#161616] hover:bg-[#262626] border border-[#710014] text-[#F2F1ED] rounded cursor-pointer">
-                    <Edit2 className="w-3.5 h-3.5 text-[#B38F6F]" />
-                  </button>
-                  <button onClick={() => deleteTool(t.id)} className="p-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded cursor-pointer">
-                    <Trash2 className="w-3.5 h-3.5" />
+        tools.length === 0 ? (
+          <div className="p-12 text-center bg-[#161616] border border-[#2a2224] rounded-md space-y-2">
+            <Wrench className="w-10 h-10 text-[#710014] mx-auto opacity-80" />
+            <div className="text-[#F2F1ED] font-bold">No AI Tools Added</div>
+            <p className="text-xs text-gray-500 font-inconsolata">Click "Add New Tool" above to recommend AI tools, IDEs, and developer environments.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {tools.map((t) => (
+              <Card key={t.id} className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <Badge variant="cyan">{t.category}</Badge>
+                  <button onClick={() => toggleToolPublish(t.id)} className="cursor-pointer">
+                    {t.published ? <Badge variant="green">Published</Badge> : <Badge variant="red">Hidden</Badge>}
                   </button>
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+
+                <h3 className="font-heading text-base font-bold text-[#F2F1ED]">{t.name}</h3>
+                <p className="text-xs text-gray-400 font-inconsolata">{t.description}</p>
+                <div className="text-xs text-[#B38F6F] font-inconsolata">Use Case: {t.useCase}</div>
+
+                <div className="pt-2 border-t border-[#2a2224] flex justify-between items-center text-xs font-inconsolata">
+                  <span className="text-gray-500">{t.skillLevel}</span>
+                  <div className="flex space-x-2">
+                    <button onClick={() => handleOpenToolModal(t)} className="p-1.5 bg-[#161616] hover:bg-[#262626] border border-[#710014] text-[#F2F1ED] rounded cursor-pointer">
+                      <Edit2 className="w-3.5 h-3.5 text-[#B38F6F]" />
+                    </button>
+                    <button onClick={() => deleteTool(t.id)} className="p-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded cursor-pointer">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )
       )}
 
       <Modal isOpen={resourceModalOpen} onClose={() => setResourceModalOpen(false)} title={editingRes ? 'Edit Resource' : 'Add Study Resource'}>

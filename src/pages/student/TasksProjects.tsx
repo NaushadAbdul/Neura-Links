@@ -162,8 +162,17 @@ export const TasksProjects: React.FC = () => {
 
       {/* Tasks Tab Panel */}
       {activeTab === 'tasks' && (
-        <div className="space-y-4">
-          {publishedTasks.map((t) => {
+        publishedTasks.length === 0 ? (
+          <div className="p-12 text-center bg-[#1c1c19] border border-[#706C61]/40 rounded-md space-y-3">
+            <CheckSquare className="w-10 h-10 text-[#706C61] mx-auto" />
+            <h3 className="font-bodoni text-xl text-[#EFE9DC] uppercase">No Tasks Assigned Yet</h3>
+            <p className="text-xs text-gray-400 font-sans max-w-md mx-auto">
+              There are currently no tasks assigned. Once administrators create learning tasks, they will appear here.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {publishedTasks.map((t) => {
             const sub = getSubmissionStatus('task', t.id);
 
             return (
@@ -239,12 +248,22 @@ export const TasksProjects: React.FC = () => {
             );
           })}
         </div>
+        )
       )}
 
       {/* Projects Tab Panel */}
       {activeTab === 'projects' && (
-        <div className="space-y-6">
-          {publishedProjects.map((p) => {
+        publishedProjects.length === 0 ? (
+          <div className="p-12 text-center bg-[#1c1c19] border border-[#706C61]/40 rounded-md space-y-3">
+            <Trophy className="w-10 h-10 text-[#706C61] mx-auto" />
+            <h3 className="font-bodoni text-xl text-[#EFE9DC] uppercase">No Major Projects Assigned Yet</h3>
+            <p className="text-xs text-gray-400 font-sans max-w-md mx-auto">
+              There are currently no major projects assigned. Once administrators create projects, they will appear here.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {publishedProjects.map((p) => {
             const sub = getSubmissionStatus('project', p.id);
 
             return (
@@ -319,6 +338,7 @@ export const TasksProjects: React.FC = () => {
             );
           })}
         </div>
+        )
       )}
 
       {/* Submission Modal Drawer */}

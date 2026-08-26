@@ -73,11 +73,22 @@ export const LearningHub: React.FC = () => {
                   : 'bg-[#161616] text-gray-400 hover:text-[#FFF8DC] hover:bg-[#262626] border border-[#674846]/40'
               }`}
             >
-              LVL 0{lvl.order} • {lvl.title.split('—')[1] || lvl.title}
+              LVL {String(lvl.order).padStart(2, '0')} • {lvl.title.split('—')[1]?.trim() || lvl.title}
             </button>
           ))}
         </div>
       </div>
+
+      {/* Empty State */}
+      {publishedLevels.length === 0 && (
+        <div className="p-12 text-center bg-[#161616] border border-[#674846]/40 rounded-md space-y-3">
+          <BookOpen className="w-10 h-10 text-[#674846] mx-auto" />
+          <h3 className="font-cornsilk text-xl text-[#FFF8DC] uppercase">No Learning Levels Created Yet</h3>
+          <p className="text-xs text-gray-400 font-sans max-w-md mx-auto">
+            There are currently no learning levels published. Once administrators create learning levels and modules, they will appear here.
+          </p>
+        </div>
+      )}
 
       {/* Modules List Grouped by Level */}
       <div className="space-y-8">
@@ -91,7 +102,7 @@ export const LearningHub: React.FC = () => {
               <div key={lvl.id} className="space-y-4">
                 <div className="flex items-center space-x-3 border-b border-[#674846]/40 pb-2">
                   <div className="w-8 h-8 rounded bg-[#674846] border border-[#FFF8DC]/40 flex items-center justify-center font-mono font-bold text-[#FFF8DC] text-xs shadow-md">
-                    0{lvl.order}
+                    {String(lvl.order).padStart(2, '0')}
                   </div>
                   <div>
                     <h2 className="font-cornsilk text-xl font-normal text-[#FFF8DC] tracking-wide uppercase">
