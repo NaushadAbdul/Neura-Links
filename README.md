@@ -1,6 +1,6 @@
 # 🚀 NEURA LINKS BOTS CLUB — AI Engineering & Progress Platform
 
-> **NEURA LINKS BOTS CLUB** is a technical learning ecosystem, student progress tracking platform, and admin control dashboard designed for AI, Machine Learning, Deep Learning, Generative AI, and Agentic AI engineering.
+> **NEURA LINKS BOTS CLUB** is a technical learning ecosystem, student progress tracking platform, and admin control dashboard designed for AI, Machine Learning, Deep Learning, Generative AI, and Agentic AI engineering. Live Production System.
 
 ---
 
