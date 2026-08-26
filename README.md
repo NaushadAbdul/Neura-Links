@@ -56,80 +56,115 @@ Built with a dark aesthetic based on modern AI engineering platforms:
 
 ---
 
-## 💻 How to Run the Application
+## 💻 How to Run the Application (Backend, Database & Frontend)
 
 ### Prerequisites
 * **Node.js**: Version 18.0 or higher
 * **npm**: Version 9.0 or higher
+* **MongoDB Atlas Account**: Database cluster set up (or use default pre-configured cluster)
 
 ---
 
-### Step 1: Clone & Install Dependencies
+### Step 1: Install Project Dependencies
 
-Navigate to the project root directory and install all required packages:
+Open terminal in the project root directory (`Club`) and run:
 
 ```bash
 # 1. Open terminal in project directory
 cd Club
 
-# 2. Install dependencies
+# 2. Install all dependencies (Frontend + Backend + Database drivers)
 npm install
 ```
 
 ---
 
-### Step 2: Start Local Development Server (Frontend + Demo Engine)
+### Step 2: Seed MongoDB Atlas Database (First Time Setup)
 
-Run the Vite local development server:
+To populate your **MongoDB Atlas** database with all initial Levels, Modules, Lessons, Tools, Tasks, Projects, Achievements, and Announcements, run from the root directory:
 
 ```bash
-npm run dev
+npm run seed
 ```
 
-The application will start immediately at:
-👉 **`http://localhost:5173/`**
-
-> **Note**: The application is pre-configured with complete mock seed data and persistence out of the box, allowing instant testing without requiring external credentials up front!
+> **What this does**: Connects to your MongoDB Atlas cluster (`MONGODB_URI` specified in `.env`) and creates all initial database collections!
 
 ---
 
-### Step 3: Instant Demo Role Credentials
+### Step 3: Run the Website (Backend + Frontend)
 
-On the Opening Screen (`/login`), click any quick demo option:
+#### 🚀 Option A: Run Both Backend & Frontend Together (Recommended — Single Command)
 
-| Role | Demo Credentials | Description |
+Run this single command from your project root directory:
+
+```bash
+npm run dev:all
+```
+
+* **Backend Express Server & Socket.io**: Runs on 👉 **`http://localhost:5000`**
+* **Frontend React & Vite Application**: Runs on 👉 **`http://localhost:5173`**
+
+---
+
+#### 🛠️ Option B: Run Backend and Frontend in Separate Terminals
+
+If you want to view backend logs and frontend logs in separate windows:
+
+* **Terminal 1 — Backend Server & Real-Time Sync**:
+  ```bash
+  npm run server
+  ```
+
+* **Terminal 2 — Frontend Application**:
+  ```bash
+  npm run dev
+  ```
+
+---
+
+### Step 4: Instant Demo Role Credentials & Multi-Device Sync Testing
+
+Open **`http://localhost:5173`** in your browser and click any quick demo option:
+
+| Role | Demo Credentials | Capabilities |
 | :--- | :--- | :--- |
-| **Approved Student** | `naushad@neuralinks.club` | Full student dashboard access (Level 5 Generative AI, 1,840 XP) |
-| **Club Administrator** | `admin@neuralinks.club` | Full admin CMS control panel, student roster, & review queue |
-| **Unregistered User** | `guest@external.com` | Simulates denied security screen for unauthorized accounts |
+| **Approved Student** | `naushad@neuralinks.club` | Full student dashboard access (Level 5 Generative AI, 1,840 XP, Tasks, Roadmap) |
+| **Club Administrator** | `admin@neuralinks.club` | Full Admin CMS, Student Roster, Submission Review Drawer, & Announcements |
+| **Unregistered User** | `guest@external.com` | Simulates security access denied screen |
+
+#### 🔄 Testing Real-Time Teacher-Student Sync Across Devices:
+1. Open **Browser 1** (Admin): Sign in as `admin@neuralinks.club`
+2. Open **Browser 2 / Mobile** (Student): Sign in as `naushad@neuralinks.club`
+3. Modify or publish any Module, Task, or Announcement in Browser 1.
+4. **Notice**: MongoDB Atlas updates instantly and broadcasts via **Socket.io**, causing Browser 2 to update in real-time without reloading the page!
 
 ---
 
-## ⚡ Connecting Real Firebase Backend (Optional)
+## ⚡ Environment Configuration (.env)
 
-To connect the application to your production Firebase project for real Google Authentication, Firestore Database, and Storage:
-
-### 1. Create `.env` file in the root directory:
+Your project configuration is located in the root file **.env**:
 
 ```env
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-```
+# MongoDB Atlas Database URI
+MONGODB_URI=mongodb+srv://dekuofficiaal734_db_user:So6E27e6vUJJC4LK@cluster0.w9rnqlz.mongodb.net/neura_links_club?retryWrites=true&w=majority
 
-### 2. Enable Firebase Services in Firebase Console:
-1. **Authentication**: Enable Google Provider in `Build > Authentication > Sign-in method`.
-2. **Firestore Database**: Create database in production mode.
-3. **Storage**: Enable Firebase Storage bucket for files.
+# Express Backend Server Port
+PORT=5000
+
+# Firebase Authentication (Active)
+VITE_FIREBASE_API_KEY=AIzaSyC8WZkOZvcsR3W3ZU2rvXwGp9idiY8eLqU
+VITE_FIREBASE_AUTH_DOMAIN=club-b35f3.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=club-b35f3
+VITE_FIREBASE_STORAGE_BUCKET=club-b35f3.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=1012598614314
+VITE_FIREBASE_APP_ID=1:1012598614314:web:5eded22460f844f7439653
+```
 
 ---
 
 ## 🏗️ Production Build & Verification
 
-To create an optimized production build:
+To create an optimized production bundle:
 
 ```bash
 npm run build
@@ -149,27 +184,32 @@ Output bundle files will be generated in the `dist/` directory.
 
 ```
 Club/
-├── index.html                    # Fonts (Inconsolata, Playfair Display), metadata
+├── .env                          # Environment variables (MongoDB URI & Firebase keys)
+├── index.html                    # Entry HTML & Font preloads
 ├── package.json                  # Dependencies & scripts
 ├── vite.config.ts                # Vite build setup with Tailwind plugin
+├── server/                       # Node.js Express + MongoDB Atlas Backend
+│   ├── index.js                  # Express server & Socket.io real-time engine
+│   ├── seedDatabase.js           # Database seeding script (npm run seed)
+│   ├── config/
+│   │   └── db.js                 # MongoDB Atlas Mongoose connection
+│   ├── models/
+│   │   └── schemas.js            # Mongoose schemas for all entities
+│   └── routes/
+│       └── api.js                # REST API endpoints & Socket triggers
 ├── src/
 │   ├── index.css                 # Global CSS theme & font rules
-│   ├── firebase.ts               # Firebase Auth, Firestore & Storage config
-│   ├── types/
-│   │   └── index.ts              # TypeScript interfaces for platform models
+│   ├── firebase.ts               # Firebase Auth setup
+│   ├── types/                    # TypeScript interfaces for platform models
+│   ├── services/
+│   │   └── apiService.ts         # MongoDB API & Socket.io client wrapper
 │   ├── context/
 │   │   ├── AuthContext.tsx       # Auth provider & demo role switcher
-│   │   └── DataContext.tsx       # Centralized state & CRUD operations
+│   │   └── DataContext.tsx       # State management connected to MongoDB Atlas
 │   ├── data/
 │   │   └── mockSeedData.ts       # Initial seed data for levels, modules & tasks
-│   ├── components/
-│   │   ├── common/               # Card, Modal, ProgressBar, Badge, SearchBar
-│   │   └── layout/               # Navbar, Sidebar, MobileNav
-│   └── pages/
-│       ├── Landing.tsx           # Landing/Login page
-│       ├── Unauthorized.tsx      # Security access denied screen
-│       ├── student/              # Dashboard, Learning, Tools, Resources, Roadmap, Tasks, Analysis, Profile, Notifications
-│       └── admin/                # AdminDashboard, StudentMgmt, ContentCMS, ResourcesCMS, RoadmapCMS, TasksProjectsCMS, SubmissionsReview, AchievementsCMS, AnnouncementsCMS, AdminAnalytics
+│   ├── components/               # UI components & navigation layouts
+│   └── pages/                    # Student & Admin role pages
 ```
 
 ---
@@ -177,3 +217,4 @@ Club/
 ## 🛡️ License & Maintainer
 
 Developed for **NEURA LINKS BOTS CLUB** • Controlled Student & Admin Ecosystem (2026).
+

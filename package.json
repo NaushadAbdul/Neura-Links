@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "server": "node server/index.js",
+    "seed": "node server/seedDatabase.js",
+    "dev:all": "concurrently \"npm run server\" \"npm run dev\"",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
@@ -12,14 +15,21 @@
   "dependencies": {
     "@react-three/fiber": "^9.7.0",
     "clsx": "^2.1.1",
+    "concurrently": "^10.0.5",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "firebase": "^12.18.0",
     "framer-motion": "^13.1.1",
     "lucide-react": "^1.33.0",
+    "mongoose": "^9.9.4",
     "ogl": "^1.0.11",
     "postprocessing": "^6.39.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.6.0",
     "three": "^0.185.1"
   },

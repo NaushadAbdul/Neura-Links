@@ -1,0 +1,74 @@
+================================================================================
+          NEURA LINKS BOTS CLUB — AI Engineering & Progress Platform
+================================================================================
+
+PROJECT OVERVIEW
+--------------------------------------------------------------------------------
+NEURA LINKS BOTS CLUB is a technical learning ecosystem, student progress tracking
+platform, and admin control dashboard designed specifically for AI, Machine Learning,
+Deep Learning, Generative AI, and Agentic AI engineering.
+
+
+TECHNICAL STACK & INFRASTRUCTURE
+--------------------------------------------------------------------------------
+• Frontend: React 18 with TypeScript & Vite
+• Styling & Animation: Tailwind CSS v4, Custom Glassmorphism System, Framer Motion
+• Icons & Typography: Lucide React, Playfair Display (Serif), Inconsolata (Monospace)
+• Routing: React Router DOM v6 with protected role-based routing
+• Backend & Database:
+  - Firebase Authentication (Google Auth Integration)
+  - Firebase Firestore (Real-time NoSQL Database)
+  - Firebase Storage (PDFs, Notes, Project attachments)
+  - Standalone Persistence Engine (Pre-populated local storage sync provider)
+
+
+FEATURES & USER ROLES
+--------------------------------------------------------------------------------
+
+1. STUDENT EXPERIENCE
+   - Personalized Dashboard (/dashboard): Progress, XP counter, current module, deadlines, focus priorities.
+   - Structured Learning Hub (/learning, /lesson/:id): Levels 01-08 with video embeds, markdown notes, code sandboxes, quizzes, and XP rewards.
+   - Visual Interactive Roadmap (/roadmap): Master path from Python to AI Agents with node status tracking.
+   - Tools Directory (/tools): Categorized AI tools directory (ChatGPT, Claude, Colab, LangChain, Hugging Face).
+   - Resources Repository (/resources): Study materials, PDFs, YouTube courses, cheat sheets.
+   - Tasks & Projects (/tasks): Submission drawer for GitHub repository URLs, live links, and notes.
+   - Student Competency Analysis (/analysis): Weak area detection, strength highlights, and weekly XP charts.
+   - Profile & Achievements (/profile, /notifications): Badges grid, project showcase, streak tracker, notifications.
+
+2. ADMIN CONTROL CENTER
+   - Master Overview (/admin): Registered students, active members, pending submissions queue, published modules.
+   - Student Roster Management (/admin/students): Search, filter, approve/block student access, custom XP awards.
+   - Content Management System (/admin/modules, /admin/resources): Full CRUD for levels, modules, lessons, tools, and resources.
+   - Submission Evaluation Queue (/admin/submissions): Code review drawer for GitHub repos/apps with Approve (+XP), Request Changes, or Reject actions.
+   - Announcements Broadcaster (/admin/announcements): Club-wide announcements.
+   - Club Analytics (/admin/analytics): Student completion metrics and performance analytics.
+
+
+PROJECT STRUCTURE
+--------------------------------------------------------------------------------
+Club/
+├── index.html                    # Entry HTML & Font preloads
+├── package.json                  # Dependencies & scripts
+├── vite.config.ts                # Vite build configuration
+├── firestore.rules               # Security rules for Firestore
+├── storage.rules                 # Security rules for Storage
+├── src/
+│   ├── index.css                 # Global styles, fonts, custom glass effects
+│   ├── firebase.ts               # Firebase configuration
+│   ├── types/                    # TypeScript interfaces
+│   ├── context/                  # AuthContext & DataContext (State & Persistence)
+│   ├── data/                     # Mock seed data for development
+│   ├── components/               # Common UI components and Navigation layouts
+│   └── pages/                    # Student & Admin role pages
+
+
+QUICK START & EXECUTION
+--------------------------------------------------------------------------------
+1. Install dependencies:  npm install
+2. Start Dev Server:       npm run dev
+3. Demo Logins:
+   - Approved Student: naushad@neuralinks.club
+   - Admin Access:     admin@neuralinks.club
+   - Unregistered:     guest@external.com
+
+================================================================================

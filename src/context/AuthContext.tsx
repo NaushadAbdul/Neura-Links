@@ -20,6 +20,7 @@ import {
   FirebaseUser
 } from '../firebase';
 import { setDoc } from 'firebase/firestore';
+import { syncToMongoAtlas } from '../services/apiService';
 
 export const ADMIN_USER_ID = 'nz5qAUHfP2OKIcPF4DqidBz2sQC2';
 export const ADMIN_USER_IDS = ['nz5qAUHfP2OKIcPF4DqidBz2sQC2', 'yZzLNGTfEHeGT6cBKkspxb8H1SG3'];
@@ -124,8 +125,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             authProvider: authenticatedUser.authProvider,
             createdAt: authenticatedUser.joinedDate,
           }, { merge: true });
+
+          // Directly sync logged in user to MongoDB Atlas
+          syncToMongoAtlas('users', authenticatedUser);
+          syncToMongoAtlas('studentProfiles', {
+            userId: authenticatedUser.id,
+            level: 1,
+            levelTitle: 'LEVEL 01 — Python Foundations',
+            xp: 0,
+            streak: 1,
+            skills: { 'Python': 50, 'AI Engineering': 30 },
+            completedModuleIds: [],
+            completedLessonIds: [],
+            completedTaskIds: [],
+            completedProjectIds: [],
+            unlockedAchievementIds: [],
+          });
         } catch (e) {
-          console.warn("Firestore user sync notice:", e);
+          console.warn("MongoDB Atlas user sync notice:", e);
         }
 
         // Prevent cross-tab auth state contamination
@@ -263,6 +280,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           authProvider: 'google',
           createdAt: authenticatedUser.joinedDate,
         }, { merge: true });
+
+        syncToMongoAtlas('users', authenticatedUser);
+        syncToMongoAtlas('studentProfiles', {
+          userId: authenticatedUser.id,
+          level: 1,
+          levelTitle: 'LEVEL 01 — Python Foundations',
+          xp: 0,
+          streak: 1,
+          skills: { 'Python': 50, 'AI Engineering': 30 },
+          completedModuleIds: [],
+          completedLessonIds: [],
+          completedTaskIds: [],
+          completedProjectIds: [],
+          unlockedAchievementIds: [],
+        });
       } catch (e) {
         console.warn("Firestore sync google user notice:", e);
       }
@@ -339,6 +371,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           authProvider: 'email',
           createdAt: authenticatedUser.joinedDate,
         }, { merge: true });
+
+        syncToMongoAtlas('users', authenticatedUser);
+        syncToMongoAtlas('studentProfiles', {
+          userId: authenticatedUser.id,
+          level: 1,
+          levelTitle: 'LEVEL 01 — Python Foundations',
+          xp: 0,
+          streak: 1,
+          skills: { 'Python': 50, 'AI Engineering': 30 },
+          completedModuleIds: [],
+          completedLessonIds: [],
+          completedTaskIds: [],
+          completedProjectIds: [],
+          unlockedAchievementIds: [],
+        });
       } catch (e) {
         console.warn("Firestore user sync notice:", e);
       }
@@ -399,6 +446,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           createdAt: authenticatedUser.joinedDate,
           uploadedFilesCount: 0,
         }, { merge: true });
+
+        syncToMongoAtlas('users', authenticatedUser);
+        syncToMongoAtlas('studentProfiles', {
+          userId: authenticatedUser.id,
+          level: 1,
+          levelTitle: 'LEVEL 01 — Python Foundations',
+          xp: 0,
+          streak: 1,
+          skills: { 'Python': 50, 'AI Engineering': 30 },
+          completedModuleIds: [],
+          completedLessonIds: [],
+          completedTaskIds: [],
+          completedProjectIds: [],
+          unlockedAchievementIds: [],
+        });
       } catch (e) {
         console.warn("Firestore sync user error:", e);
       }

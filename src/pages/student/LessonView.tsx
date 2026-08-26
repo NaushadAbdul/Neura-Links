@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   ShieldAlert,
   AlertTriangle,
+  Lock,
 } from 'lucide-react';
 
 declare global {
@@ -34,7 +35,7 @@ declare global {
 export const LessonView: React.FC = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
-  const { lessons, modules, studentProfiles, markLessonComplete, updateLessonWatchProgress } = useData();
+  const { lessons, modules, levels, studentProfiles, markLessonComplete, updateLessonWatchProgress } = useData();
   const { currentUser } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'notes' | 'code' | 'quiz' | 'resources'>('notes');
@@ -45,6 +46,7 @@ export const LessonView: React.FC = () => {
 
   const lessonItem = lessons.find(l => l.id === lessonId);
   const moduleItem = modules.find(m => m.id === lessonItem?.moduleId);
+  const parentLevel = levels.find(l => l.id === moduleItem?.levelId);
 
   const profile = currentUser ? studentProfiles[currentUser.id] : null;
   const isAlreadyCompleted = profile?.completedLessonIds.includes(lessonId || '');
@@ -172,6 +174,21 @@ export const LessonView: React.FC = () => {
       <div className="p-8 text-center text-gray-400 space-y-4">
         <div>Lesson not found or unavailable.</div>
         <button onClick={() => navigate('/learning')} className="text-purple-400 font-mono text-xs">
+          ← Return to Learning Hub
+        </button>
+      </div>
+    );
+  }
+
+  if (parentLevel?.isLocked) {
+    return (
+      <div className="p-12 text-center text-[#EFE9DC] space-y-4 bg-[#1c1c19] border border-rose-900/60 rounded-xl">
+        <Lock className="w-12 h-12 text-rose-400 mx-auto" />
+        <h2 className="font-cornsilk text-2xl uppercase font-bold text-rose-300">🔒 Level Locked by Administrator</h2>
+        <p className="text-xs text-gray-300 max-w-md mx-auto">
+          "{parentLevel.title}" is currently locked. Complete earlier modules or wait for administrator unlock.
+        </p>
+        <button onClick={() => navigate('/learning')} className="px-4 py-2 bg-[#674846] text-[#FFF8DC] font-heading text-xs uppercase rounded-md font-bold cursor-pointer">
           ← Return to Learning Hub
         </button>
       </div>

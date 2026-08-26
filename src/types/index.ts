@@ -48,6 +48,7 @@ export interface Level {
   title: string;
   description: string;
   published: boolean;
+  isLocked?: boolean;
 }
 
 export interface Module {

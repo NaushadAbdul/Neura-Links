@@ -132,24 +132,10 @@ export const SubmissionsReview: React.FC = () => {
                     href={sub.githubUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-2.5 bg-[#181824] border border-[#272738] hover:border-purple-500 text-xs font-mono text-gray-200 hover:text-white rounded-md transition-all flex items-center space-x-2"
+                    className="p-2.5 bg-[#181824] border border-[#272738] hover:border-purple-500 text-xs font-mono text-gray-200 hover:text-white rounded-md transition-all flex items-center space-x-2 cursor-pointer"
                   >
                     <Code2 className="w-4 h-4 text-purple-400" />
                     <span>Inspect GitHub Repository</span>
-                  </a>
-                )}
-
-                {sub.uploadedFileUrl && (
-                  <a
-                    href={sub.uploadedFileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    download={sub.uploadedFileName || 'solution_file'}
-                    className="p-2.5 bg-purple-950/60 border border-purple-800 hover:border-purple-500 text-xs font-mono text-purple-200 hover:text-white rounded-md transition-all flex items-center space-x-2 cursor-pointer"
-                  >
-                    <FileText className="w-4 h-4 text-purple-300" />
-                    <span>Download Solution File: {sub.uploadedFileName} ({sub.uploadedFileSize || 'File'})</span>
-                    <Download className="w-3.5 h-3.5 text-purple-300 ml-1" />
                   </a>
                 )}
 
@@ -158,12 +144,40 @@ export const SubmissionsReview: React.FC = () => {
                     href={sub.liveDemoUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-2.5 bg-[#181824] border border-[#272738] hover:border-cyan-500 text-xs font-mono text-gray-200 hover:text-white rounded-md transition-all flex items-center space-x-2"
+                    className="p-2.5 bg-[#181824] border border-[#272738] hover:border-cyan-500 text-xs font-mono text-gray-200 hover:text-white rounded-md transition-all flex items-center space-x-2 cursor-pointer"
                   >
                     <Globe className="w-4 h-4 text-cyan-400" />
                     <span>Open Live Application Demo</span>
                   </a>
                 )}
+
+                {/* Uploaded File Access Button (.zip, .ipynb, .py, .pdf) */}
+                <a
+                  href={sub.uploadedFileUrl || '#'}
+                  target={sub.uploadedFileUrl ? "_blank" : "_self"}
+                  rel="noreferrer"
+                  download={sub.uploadedFileName || 'solution_code.zip'}
+                  onClick={(e) => {
+                    if (!sub.uploadedFileUrl) {
+                      e.preventDefault();
+                      alert(`No raw file uploaded for this submission. The student submitted via GitHub repository: ${sub.githubUrl || 'N/A'}`);
+                    }
+                  }}
+                  className={`p-2.5 border text-xs font-mono rounded-md transition-all flex items-center space-x-2 cursor-pointer ${
+                    sub.uploadedFileUrl
+                      ? 'bg-emerald-950/80 border-emerald-700 hover:border-emerald-400 text-emerald-200 hover:text-white shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                      : 'bg-[#181824] border-[#272738] text-gray-400 hover:text-gray-200'
+                  }`}
+                  title="Access uploaded solution file (.zip, .ipynb, .py, .pdf)"
+                >
+                  <FileText className={`w-4 h-4 ${sub.uploadedFileUrl ? 'text-emerald-400' : 'text-gray-400'}`} />
+                  <span>
+                    {sub.uploadedFileName
+                      ? `Access Code File (${sub.uploadedFileName})`
+                      : 'Access Solution File (.zip, .ipynb, .py)'}
+                  </span>
+                  <Download className={`w-3.5 h-3.5 ${sub.uploadedFileUrl ? 'text-emerald-400' : 'text-gray-400'} ml-1`} />
+                </a>
               </div>
 
               {sub.documentation && (

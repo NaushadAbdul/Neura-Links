@@ -17,7 +17,7 @@ import {
   AppNotification,
 } from '../types';
 
-import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { isUserAdminCheck } from './AuthContext';
 import {
@@ -38,6 +38,14 @@ import {
   INITIAL_NOTIFICATIONS,
 } from '../data/mockSeedData';
 
+import {
+  fetchAllDataFromMongo,
+  seedMongoAtlasDatabase,
+  syncToMongoAtlas,
+  removeFromMongoAtlas,
+  subscribeToRealTimeUpdates,
+} from '../services/apiService';
+
 const broadcastStateUpdate = (key: string, data: any) => {
   if (typeof window === 'undefined') return;
   try {
@@ -48,25 +56,6 @@ const broadcastStateUpdate = (key: string, data: any) => {
       channel.close();
     }
   } catch (e) {}
-};
-
-const syncDocToFirestore = (collName: string, id: string, data: any) => {
-  try {
-    setDoc(doc(db, collName, id), data, { merge: true }).catch(err => console.warn(`Firestore sync ${collName} notice:`, err));
-  } catch (e) {}
-};
-
-const removeDocFromFirestore = (collName: string, id: string) => {
-  try {
-    deleteDoc(doc(db, collName, id)).catch(err => console.warn(`Firestore delete ${collName} notice:`, err));
-  } catch (e) {}
-};
-
-const mergeCollections = <T extends { id: string }>(currentItems: T[], fetchedItems: T[]): T[] => {
-  const itemMap = new Map<string, T>();
-  currentItems.forEach(item => itemMap.set(item.id, item));
-  fetchedItems.forEach(item => itemMap.set(item.id, item));
-  return Array.from(itemMap.values());
 };
 
 interface DataContextType {
@@ -106,6 +95,7 @@ interface DataContextType {
   updateLevel: (level: Level) => void;
   deleteLevel: (id: string) => void;
   toggleLevelPublish: (id: string) => void;
+  toggleLevelLock: (id: string) => void;
 
   createModule: (mod: Omit<Module, 'id'>) => void;
   updateModule: (mod: Module) => void;
@@ -157,72 +147,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const saved = typeof window !== 'undefined' ? localStorage.getItem(`nlbc_${key}`) : null;
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          const cleaned = parsed.filter((item: any) => {
-            if (!item || typeof item !== 'object') return false;
-            const id = item.id || '';
-            if (
-              id.startsWith('res_0') ||
-              id.startsWith('mod_py_') ||
-              id.startsWith('mod_ds_') ||
-              id.startsWith('mod_ml_') ||
-              id.startsWith('mod_genai_') ||
-              id.startsWith('les_py_') ||
-              id.startsWith('les_ml_') ||
-              id.startsWith('lvl_0') ||
-              id.startsWith('tool_0') ||
-              id.startsWith('rm_0') ||
-              id.startsWith('task_0') ||
-              id.startsWith('proj_0') ||
-              id.startsWith('ach_0') ||
-              id.startsWith('ann_0') ||
-              id.startsWith('notif_0')
-            ) {
-              return false;
-            }
-            return true;
-          });
-
-          if (key === 'users') {
-            const cleanedUsers = cleaned.filter((u: any) =>
-              u.id !== 'user_admin_01' &&
-              u.id !== 'user_student_01' &&
-              u.id !== 'user_student_02' &&
-              u.email !== 'admin@neuralinks.club' &&
-              u.email !== 'naushad@neuralinks.club' &&
-              u.email !== 'rahul@neuralinks.club'
-            );
-            const emailMap = new Map<string, any>();
-            cleanedUsers.forEach((u: any) => {
-              if (u.email) emailMap.set(u.email.toLowerCase(), u);
-            });
-            const dedupedUsers = Array.from(emailMap.values());
-            if (typeof window !== 'undefined') localStorage.setItem('nlbc_users', JSON.stringify(dedupedUsers));
-            return dedupedUsers as unknown as T;
-          }
-
-          if (typeof window !== 'undefined') localStorage.setItem(`nlbc_${key}`, JSON.stringify(cleaned));
-          return cleaned as unknown as T;
-        }
-        if (key === 'studentProfiles' && typeof parsed === 'object' && parsed !== null) {
-          delete parsed['user_student_01'];
-          delete parsed['user_student_02'];
-          if (typeof window !== 'undefined') localStorage.setItem('nlbc_studentProfiles', JSON.stringify(parsed));
-          return parsed as unknown as T;
-        }
-        if (key === 'userActions' && Array.isArray(parsed)) {
-          const cleanedActions = parsed.filter((a: any) =>
-            a.userId !== 'user_student_01' &&
-            a.userId !== 'user_student_02' &&
-            a.userEmail !== 'naushad@neuralinks.club' &&
-            a.userEmail !== 'rahul@neuralinks.club'
-          );
-          if (typeof window !== 'undefined') localStorage.setItem('nlbc_userActions', JSON.stringify(cleanedActions));
-          return cleanedActions as unknown as T;
-        }
-        return parsed;
-      } catch (e) { console.error(e); }
+        return JSON.parse(saved);
+      } catch (e) {}
     }
     return fallback;
   };
@@ -259,78 +185,141 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => { broadcastStateUpdate('announcements', announcements); }, [announcements]);
   useEffect(() => { broadcastStateUpdate('notifications', notifications); }, [notifications]);
 
+  // INITIAL HYDRATION FROM MONGODB ATLAS & REAL-TIME SOCKET LISTENER
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const hydrateAndSeed = async () => {
+      const dbData = await fetchAllDataFromMongo();
+      if (dbData) {
+        let hasData = false;
+        if (dbData.users && dbData.users.length > 0) { setUsers(dbData.users); hasData = true; }
+        if (dbData.studentProfiles && Object.keys(dbData.studentProfiles).length > 0) { setStudentProfiles(dbData.studentProfiles); hasData = true; }
+        if (dbData.levels && dbData.levels.length > 0) { setLevels(dbData.levels); hasData = true; }
+        if (dbData.modules && dbData.modules.length > 0) { setModules(dbData.modules); hasData = true; }
+        if (dbData.lessons && dbData.lessons.length > 0) { setLessons(dbData.lessons); hasData = true; }
+        if (dbData.tools && dbData.tools.length > 0) { setTools(dbData.tools); hasData = true; }
+        if (dbData.resources && dbData.resources.length > 0) { setResources(dbData.resources); hasData = true; }
+        if (dbData.roadmapNodes && dbData.roadmapNodes.length > 0) { setRoadmapNodes(dbData.roadmapNodes); hasData = true; }
+        if (dbData.tasks && dbData.tasks.length > 0) { setTasks(dbData.tasks); hasData = true; }
+        if (dbData.projects && dbData.projects.length > 0) { setProjects(dbData.projects); hasData = true; }
+        if (dbData.submissions && dbData.submissions.length > 0) { setSubmissions(dbData.submissions); hasData = true; }
+        if (dbData.achievements && dbData.achievements.length > 0) { setAchievements(dbData.achievements); hasData = true; }
+        if (dbData.announcements && dbData.announcements.length > 0) { setAnnouncements(dbData.announcements); hasData = true; }
+        if (dbData.notifications && dbData.notifications.length > 0) { setNotifications(dbData.notifications); hasData = true; }
+        if (dbData.userActions && dbData.userActions.length > 0) { setUserActions(dbData.userActions); hasData = true; }
 
-    const handleSync = (key: string, rawData: any) => {
-      try {
-        if (key === 'modules' && Array.isArray(rawData)) setModules(rawData);
-        else if (key === 'lessons' && Array.isArray(rawData)) setLessons(rawData);
-        else if (key === 'tasks' && Array.isArray(rawData)) setTasks(rawData);
-        else if (key === 'projects' && Array.isArray(rawData)) setProjects(rawData);
-        else if (key === 'tools' && Array.isArray(rawData)) setTools(rawData);
-        else if (key === 'resources' && Array.isArray(rawData)) setResources(rawData);
-        else if (key === 'roadmapNodes' && Array.isArray(rawData)) setRoadmapNodes(rawData);
-        else if (key === 'announcements' && Array.isArray(rawData)) setAnnouncements(rawData);
-        else if (key === 'achievements' && Array.isArray(rawData)) setAchievements(rawData);
-        else if (key === 'levels' && Array.isArray(rawData)) setLevels(rawData);
-        else if (key === 'submissions' && Array.isArray(rawData)) setSubmissions(rawData);
-        else if (key === 'users' && Array.isArray(rawData)) setUsers(rawData);
-        else if (key === 'studentProfiles' && typeof rawData === 'object' && rawData !== null) setStudentProfiles(rawData);
-      } catch (e) {
-        console.warn("Realtime sync handle notice:", e);
+        if (!hasData) {
+          // Seed database if empty
+          await seedMongoAtlasDatabase({
+            users: INITIAL_USERS,
+            studentProfiles: INITIAL_STUDENT_PROFILES,
+            userActions: INITIAL_USER_ACTIONS,
+            levels: INITIAL_LEVELS,
+            modules: INITIAL_MODULES,
+            lessons: INITIAL_LESSONS,
+            tools: INITIAL_TOOLS,
+            resources: INITIAL_RESOURCES,
+            roadmapNodes: INITIAL_ROADMAP_NODES,
+            tasks: INITIAL_TASKS,
+            projects: INITIAL_PROJECTS,
+            submissions: INITIAL_SUBMISSIONS,
+            achievements: INITIAL_ACHIEVEMENTS,
+            announcements: INITIAL_ANNOUNCEMENTS,
+            notifications: INITIAL_NOTIFICATIONS,
+          });
+        }
       }
     };
 
-    let bc: BroadcastChannel | null = null;
-    if ('BroadcastChannel' in window) {
-      bc = new BroadcastChannel('neura_links_live_sync');
-      bc.onmessage = (event) => {
-        if (event.data && event.data.key && event.data.data) {
-          handleSync(event.data.key, event.data.data);
+    hydrateAndSeed();
+
+    // Subscribe to Socket.io real-time updates from Express/MongoDB server
+    const unsubscribeSocket = subscribeToRealTimeUpdates((payload) => {
+      const { entity, action, data, id } = payload;
+
+      if (action === 'seeded' || entity === 'all') {
+        hydrateAndSeed();
+        return;
+      }
+
+      if (entity === 'levels') {
+        if (action === 'delete') setLevels(prev => prev.filter(item => item.id !== id));
+        else if (data) setLevels(prev => [...prev.filter(item => item.id !== data.id), data].sort((a, b) => a.order - b.order));
+      } else if (entity === 'modules') {
+        if (action === 'delete') setModules(prev => prev.filter(item => item.id !== id));
+        else if (data) setModules(prev => [...prev.filter(item => item.id !== data.id), data].sort((a, b) => a.order - b.order));
+      } else if (entity === 'lessons') {
+        if (action === 'delete') setLessons(prev => prev.filter(item => item.id !== id));
+        else if (data) setLessons(prev => [...prev.filter(item => item.id !== data.id), data].sort((a, b) => a.order - b.order));
+      } else if (entity === 'tasks') {
+        if (action === 'delete') setTasks(prev => prev.filter(item => item.id !== id));
+        else if (data) setTasks(prev => [...prev.filter(item => item.id !== data.id), data]);
+      } else if (entity === 'projects') {
+        if (action === 'delete') setProjects(prev => prev.filter(item => item.id !== id));
+        else if (data) setProjects(prev => [...prev.filter(item => item.id !== data.id), data]);
+      } else if (entity === 'tools') {
+        if (action === 'delete') setTools(prev => prev.filter(item => item.id !== id));
+        else if (data) setTools(prev => [...prev.filter(item => item.id !== data.id), data]);
+      } else if (entity === 'resources') {
+        if (action === 'delete') setResources(prev => prev.filter(item => item.id !== id));
+        else if (data) setResources(prev => [...prev.filter(item => item.id !== data.id), data]);
+      } else if (entity === 'roadmapNodes') {
+        if (action === 'delete') setRoadmapNodes(prev => prev.filter(item => item.id !== id));
+        else if (data) setRoadmapNodes(prev => [...prev.filter(item => item.id !== data.id), data].sort((a, b) => a.order - b.order));
+      } else if (entity === 'announcements') {
+        if (action === 'delete') setAnnouncements(prev => prev.filter(item => item.id !== id));
+        else if (data) setAnnouncements(prev => [data, ...prev.filter(item => item.id !== data.id)]);
+      } else if (entity === 'achievements') {
+        if (action === 'delete') setAchievements(prev => prev.filter(item => item.id !== id));
+        else if (data) setAchievements(prev => [...prev.filter(item => item.id !== data.id), data]);
+      } else if (entity === 'submissions') {
+        if (action === 'delete') setSubmissions(prev => prev.filter(item => item.id !== id));
+        else if (data) setSubmissions(prev => [data, ...prev.filter(item => item.id !== data.id)]);
+      } else if (entity === 'notifications') {
+        if (action === 'delete') setNotifications(prev => prev.filter(item => item.id !== id));
+        else if (data) setNotifications(prev => [data, ...prev.filter(item => item.id !== data.id)]);
+      } else if (entity === 'userActions') {
+        if (action === 'delete') setUserActions(prev => prev.filter(item => item.id !== id));
+        else if (data) setUserActions(prev => [data, ...prev.filter(item => item.id !== data.id)]);
+      } else if (entity === 'users') {
+        if (action === 'delete') setUsers(prev => prev.filter(item => item.id !== id));
+        else if (data) setUsers(prev => [...prev.filter(item => item.id !== data.id), data]);
+      } else if (entity === 'studentProfiles') {
+        if (action === 'delete') {
+          setStudentProfiles(prev => {
+            const copy = { ...prev };
+            delete copy[id!];
+            return copy;
+          });
+        } else if (data && data.userId) {
+          setStudentProfiles(prev => ({ ...prev, [data.userId]: data }));
         }
-      };
-    }
-
-    const handleStorage = (e: StorageEvent) => {
-      if (!e.key || !e.newValue || !e.key.startsWith('nlbc_')) return;
-      const dataKey = e.key.replace('nlbc_', '');
-      try {
-        const parsed = JSON.parse(e.newValue);
-        handleSync(dataKey, parsed);
-      } catch (err) {}
-    };
-
-    window.addEventListener('storage', handleStorage);
+      }
+    });
 
     return () => {
-      if (bc) bc.close();
-      window.removeEventListener('storage', handleStorage);
+      unsubscribeSocket();
     };
   }, []);
 
+  // REAL-TIME SYNC: Listen to Firestore registered users and save them to MongoDB Atlas
   useEffect(() => {
     try {
-      const unsubs: (() => void)[] = [];
-
-      unsubs.push(onSnapshot(collection(db, 'users'), (snapshot) => {
+      const unsubscribeFirestoreUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
         if (!snapshot.empty) {
-          const fetchedUsers: User[] = snapshot.docs
-            .filter(docSnap => docSnap.id !== 'user_admin_01' && docSnap.data().email !== 'admin@neuralinks.club')
-            .map(docSnap => {
-              const data = docSnap.data();
-              const isAdmin = isUserAdminCheck(docSnap.id, data.email) || data.role === 'admin';
-              return {
-                id: docSnap.id,
-                name: data.name || data.displayName || data.email?.split('@')[0] || 'Club Student',
-                email: data.email || '',
-                avatar: data.avatar || data.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-                role: isAdmin ? 'admin' : 'student',
-                status: data.status || 'active',
-                joinedDate: data.createdAt || data.joinedDate || new Date().toISOString().split('T')[0],
-                authProvider: data.authProvider || 'google',
-              };
-            });
+          const fetchedUsers: User[] = snapshot.docs.map(docSnap => {
+            const data = docSnap.data();
+            const isAdmin = isUserAdminCheck(docSnap.id, data.email) || data.role === 'admin';
+            return {
+              id: docSnap.id,
+              name: data.name || data.displayName || data.email?.split('@')[0] || 'Club Student',
+              email: data.email || '',
+              avatar: data.avatar || data.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+              role: isAdmin ? 'admin' : 'student',
+              status: data.status || 'active',
+              joinedDate: data.createdAt || data.joinedDate || new Date().toISOString().split('T')[0],
+              authProvider: data.authProvider || 'google',
+            };
+          });
 
           setUsers(prev => {
             const emailMap = new Map<string, User>();
@@ -339,55 +328,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
             fetchedUsers.forEach(u => {
               if (u.email) emailMap.set(u.email.toLowerCase(), u);
+              syncToMongoAtlas('users', u);
             });
             return Array.from(emailMap.values());
           });
         }
-      }));
+      });
 
-      unsubs.push(onSnapshot(collection(db, 'levels'), (snapshot) => {
-        const items = snapshot.docs.map(d => d.data() as Level);
-        setLevels(items);
-      }));
-
-      unsubs.push(onSnapshot(collection(db, 'modules'), (snapshot) => {
-        const items = snapshot.docs.map(d => d.data() as Module);
-        setModules(items);
-      }));
-
-      unsubs.push(onSnapshot(collection(db, 'lessons'), (snapshot) => {
-        const items = snapshot.docs.map(d => d.data() as Lesson);
-        setLessons(items);
-      }));
-
-      unsubs.push(onSnapshot(collection(db, 'tasks'), (snapshot) => {
-        const items = snapshot.docs.map(d => d.data() as Task);
-        setTasks(items);
-      }));
-
-      unsubs.push(onSnapshot(collection(db, 'projects'), (snapshot) => {
-        const items = snapshot.docs.map(d => d.data() as Project);
-        setProjects(items);
-      }));
-
-      unsubs.push(onSnapshot(collection(db, 'tools'), (snapshot) => {
-        const items = snapshot.docs.map(d => d.data() as Tool);
-        setTools(items);
-      }));
-
-      unsubs.push(onSnapshot(collection(db, 'resources'), (snapshot) => {
-        const items = snapshot.docs.map(d => d.data() as Resource);
-        setResources(items);
-      }));
-
-      unsubs.push(onSnapshot(collection(db, 'announcements'), (snapshot) => {
-        const items = snapshot.docs.map(d => d.data() as Announcement);
-        setAnnouncements(items);
-      }));
-
-      return () => unsubs.forEach(fn => fn());
+      return () => unsubscribeFirestoreUsers();
     } catch (e) {
-      console.warn("Live Firestore collection listeners notice:", e);
+      console.warn("Firestore live users sync notice:", e);
     }
   }, []);
 
@@ -398,52 +348,55 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       timestamp: new Date().toLocaleString(),
     };
     setUserActions(prev => [newAction, ...prev]);
+    syncToMongoAtlas('userActions', newAction);
   };
 
   // REGISTER GOOGLE AUTH USER
   const registerGoogleUser = (googleUser: User) => {
     const userEmailLower = googleUser.email.toLowerCase();
 
-    // Add or update user record, deduplicated by email
     setUsers(prev => {
       const emailMap = new Map<string, User>();
       prev.forEach(u => {
         if (u.email) emailMap.set(u.email.toLowerCase(), u);
       });
-      emailMap.set(userEmailLower, {
+      const updatedUser = {
         ...googleUser,
-        authProvider: 'google',
-      });
+        authProvider: 'google' as const,
+      };
+      emailMap.set(userEmailLower, updatedUser);
+      syncToMongoAtlas('users', updatedUser);
       return Array.from(emailMap.values());
     });
 
-    // Add profile if not exists, maintaining XP progress across devices
     setStudentProfiles(prev => {
       if (prev[googleUser.id]) return prev;
 
-      // Check if profile exists under a different ID for the same email
       const existingKey = Object.keys(prev).find(k => prev[k]?.userId === googleUser.id);
       if (existingKey) return prev;
 
+      const newProfile: StudentProfile = {
+        userId: googleUser.id,
+        level: 1,
+        levelTitle: 'LEVEL 01 — Python Foundations',
+        xp: 0,
+        streak: 1,
+        skills: { 'Python': 50, 'AI Engineering': 30 },
+        completedModuleIds: [],
+        completedLessonIds: [],
+        completedTaskIds: [],
+        completedProjectIds: [],
+        unlockedAchievementIds: [],
+      };
+
+      syncToMongoAtlas('studentProfiles', newProfile);
+
       return {
         ...prev,
-        [googleUser.id]: {
-          userId: googleUser.id,
-          level: 1,
-          levelTitle: 'LEVEL 01 — Python Foundations',
-          xp: 0,
-          streak: 1,
-          skills: { 'Python': 50, 'AI Engineering': 30 },
-          completedModuleIds: [],
-          completedLessonIds: [],
-          completedTaskIds: [],
-          completedProjectIds: [],
-          unlockedAchievementIds: [],
-        }
+        [googleUser.id]: newProfile,
       };
     });
 
-    // Log Login Action
     logUserAction({
       userId: googleUser.id,
       userName: googleUser.name,
@@ -483,7 +436,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedCompletedLessons = [...profile.completedLessonIds, lessonId];
       let updatedCompletedModules = [...profile.completedModuleIds];
 
-      // Check if all lessons for this module are completed
       if (targetLesson) {
         const moduleLessons = lessons.filter(l => l.moduleId === targetLesson.moduleId && l.published);
         const allCompleted = moduleLessons.every(l => updatedCompletedLessons.includes(l.id));
@@ -507,25 +459,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       else if (newXP > 200) { newLevel = 3; newLevelTitle = 'LEVEL 03 — MACHINE LEARNING'; }
       else if (newXP > 100) { newLevel = 2; newLevelTitle = 'LEVEL 02 — DATA SCIENCE'; }
 
-      // Increase skills
       const updatedSkills = { ...(profile.skills || { 'Python': 50 }) };
       updatedSkills['Python'] = Math.min(100, (updatedSkills['Python'] || 50) + 5);
 
+      const updatedProfile: StudentProfile = {
+        ...profile,
+        xp: newXP,
+        level: newLevel,
+        levelTitle: newLevelTitle,
+        skills: updatedSkills,
+        completedLessonIds: updatedCompletedLessons,
+        completedModuleIds: updatedCompletedModules,
+      };
+
+      syncToMongoAtlas('studentProfiles', updatedProfile);
+
       return {
         ...prev,
-        [studentId]: {
-          ...profile,
-          xp: newXP,
-          level: newLevel,
-          levelTitle: newLevelTitle,
-          skills: updatedSkills,
-          completedLessonIds: updatedCompletedLessons,
-          completedModuleIds: updatedCompletedModules,
-        },
+        [studentId]: updatedProfile,
       };
     });
 
-    // Log Action
     if (studentUser) {
       logUserAction({
         userId: studentId,
@@ -537,7 +491,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     }
 
-    // Add notifications
     const now = new Date().toISOString().split('T')[0];
     const newNotif: AppNotification = {
       id: `notif_${Date.now()}`,
@@ -549,6 +502,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: now,
     };
     setNotifications(prev => [newNotif, ...prev]);
+    syncToMongoAtlas('notifications', newNotif);
 
     if (isCourseCompleted) {
       const courseNotif: AppNotification = {
@@ -561,6 +515,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createdAt: now,
       };
       setNotifications(prev => [courseNotif, ...prev]);
+      syncToMongoAtlas('notifications', courseNotif);
     }
   };
 
@@ -585,19 +540,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const existingMap = profile.lessonWatchProgress || {};
       const currentPercent = existingMap[lessonId] || 0;
-      if (currentPercent >= clampedPercent) return prev; // Avoid unnecessary re-renders
+      if (currentPercent >= clampedPercent) return prev;
 
       const updatedMap = {
         ...existingMap,
         [lessonId]: clampedPercent,
       };
 
+      const updatedProfile = {
+        ...profile,
+        lessonWatchProgress: updatedMap,
+      };
+
+      syncToMongoAtlas('studentProfiles', updatedProfile);
+
       return {
         ...prev,
-        [studentId]: {
-          ...profile,
-          lessonWatchProgress: updatedMap,
-        },
+        [studentId]: updatedProfile,
       };
     });
   };
@@ -610,8 +569,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       submittedAt: new Date().toISOString().split('T')[0],
     };
     setSubmissions(prev => [newSub, ...prev]);
+    syncToMongoAtlas('submissions', newSub);
 
-    // Log Action
     logUserAction({
       userId: submissionData.studentId,
       userName: submissionData.studentName,
@@ -621,7 +580,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       description: `Submitted ${submissionData.type} "${submissionData.targetTitle}" for review`,
     });
 
-    // Add notification to student
     const notif: AppNotification = {
       id: `notif_${Date.now()}`,
       studentId: submissionData.studentId,
@@ -632,16 +590,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: new Date().toISOString().split('T')[0],
     };
     setNotifications(prev => [notif, ...prev]);
+    syncToMongoAtlas('notifications', notif);
   };
 
   const markNotificationRead = (notificationId: string) => {
-    setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
+    setNotifications(prev => prev.map(n => {
+      if (n.id === notificationId) {
+        const updated = { ...n, read: true };
+        syncToMongoAtlas('notifications', updated);
+        return updated;
+      }
+      return n;
+    }));
   };
 
   // ADMIN ACTIONS - USERS
   const updateUserStatus = (userId: string, status: 'active' | 'inactive') => {
     const u = users.find(x => x.id === userId);
-    setUsers(prev => prev.map(x => x.id === userId ? { ...x, status } : x));
+    setUsers(prev => prev.map(x => {
+      if (x.id === userId) {
+        const updated = { ...x, status };
+        syncToMongoAtlas('users', updated);
+        return updated;
+      }
+      return x;
+    }));
 
     if (u) {
       logUserAction({
@@ -660,9 +633,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setStudentProfiles(prev => {
       const p = prev[userId];
       if (!p) return prev;
+      const updated = { ...p, xp: p.xp + xpAmount };
+      syncToMongoAtlas('studentProfiles', updated);
       return {
         ...prev,
-        [userId]: { ...p, xp: p.xp + xpAmount }
+        [userId]: updated,
       };
     });
 
@@ -691,11 +666,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     }
     setUsers(prev => prev.filter(x => x.id !== userId));
+    removeFromMongoAtlas('users', userId);
+
     setStudentProfiles(prev => {
       const copy = { ...prev };
       delete copy[userId];
       return copy;
     });
+    removeFromMongoAtlas('studentProfiles', userId);
+
     setNotifications(prev => prev.filter(n => n.studentId !== userId));
   };
 
@@ -703,21 +682,32 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createLevel = (data: Omit<Level, 'id'>) => {
     const newLevel: Level = { ...data, id: `lvl_${Date.now()}` };
     setLevels(prev => [...prev, newLevel]);
-    syncDocToFirestore('levels', newLevel.id, newLevel);
+    syncToMongoAtlas('levels', newLevel);
   };
   const updateLevel = (data: Level) => {
     setLevels(prev => prev.map(l => l.id === data.id ? data : l));
-    syncDocToFirestore('levels', data.id, data);
+    syncToMongoAtlas('levels', data);
   };
   const deleteLevel = (id: string) => {
     setLevels(prev => prev.filter(l => l.id !== id));
-    removeDocFromFirestore('levels', id);
+    removeFromMongoAtlas('levels', id);
   };
   const toggleLevelPublish = (id: string) => {
     setLevels(prev => prev.map(l => {
       if (l.id === id) {
         const updated = { ...l, published: !l.published };
-        syncDocToFirestore('levels', id, updated);
+        syncToMongoAtlas('levels', updated);
+        return updated;
+      }
+      return l;
+    }));
+  };
+
+  const toggleLevelLock = (id: string) => {
+    setLevels(prev => prev.map(l => {
+      if (l.id === id) {
+        const updated = { ...l, isLocked: !Boolean(l.isLocked) };
+        syncToMongoAtlas('levels', updated);
         return updated;
       }
       return l;
@@ -728,21 +718,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createModule = (data: Omit<Module, 'id'>) => {
     const newMod: Module = { ...data, id: `mod_${Date.now()}` };
     setModules(prev => [...prev, newMod]);
-    syncDocToFirestore('modules', newMod.id, newMod);
+    syncToMongoAtlas('modules', newMod);
   };
   const updateModule = (data: Module) => {
     setModules(prev => prev.map(m => m.id === data.id ? data : m));
-    syncDocToFirestore('modules', data.id, data);
+    syncToMongoAtlas('modules', data);
   };
   const deleteModule = (id: string) => {
     setModules(prev => prev.filter(m => m.id !== id));
-    removeDocFromFirestore('modules', id);
+    removeFromMongoAtlas('modules', id);
   };
   const toggleModulePublish = (id: string) => {
     setModules(prev => prev.map(m => {
       if (m.id === id) {
         const updated = { ...m, published: !m.published };
-        syncDocToFirestore('modules', id, updated);
+        syncToMongoAtlas('modules', updated);
         return updated;
       }
       return m;
@@ -753,21 +743,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createLesson = (data: Omit<Lesson, 'id'>) => {
     const newLes: Lesson = { ...data, id: `les_${Date.now()}` };
     setLessons(prev => [...prev, newLes]);
-    syncDocToFirestore('lessons', newLes.id, newLes);
+    syncToMongoAtlas('lessons', newLes);
   };
   const updateLesson = (data: Lesson) => {
     setLessons(prev => prev.map(l => l.id === data.id ? data : l));
-    syncDocToFirestore('lessons', data.id, data);
+    syncToMongoAtlas('lessons', data);
   };
   const deleteLesson = (id: string) => {
     setLessons(prev => prev.filter(l => l.id !== id));
-    removeDocFromFirestore('lessons', id);
+    removeFromMongoAtlas('lessons', id);
   };
   const toggleLessonPublish = (id: string) => {
     setLessons(prev => prev.map(l => {
       if (l.id === id) {
         const updated = { ...l, published: !l.published };
-        syncDocToFirestore('lessons', id, updated);
+        syncToMongoAtlas('lessons', updated);
         return updated;
       }
       return l;
@@ -778,21 +768,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createTool = (data: Omit<Tool, 'id'>) => {
     const newTool: Tool = { ...data, id: `tool_${Date.now()}` };
     setTools(prev => [...prev, newTool]);
-    syncDocToFirestore('tools', newTool.id, newTool);
+    syncToMongoAtlas('tools', newTool);
   };
   const updateTool = (data: Tool) => {
     setTools(prev => prev.map(t => t.id === data.id ? data : t));
-    syncDocToFirestore('tools', data.id, data);
+    syncToMongoAtlas('tools', data);
   };
   const deleteTool = (id: string) => {
     setTools(prev => prev.filter(t => t.id !== id));
-    removeDocFromFirestore('tools', id);
+    removeFromMongoAtlas('tools', id);
   };
   const toggleToolPublish = (id: string) => {
     setTools(prev => prev.map(t => {
       if (t.id === id) {
         const updated = { ...t, published: !t.published };
-        syncDocToFirestore('tools', id, updated);
+        syncToMongoAtlas('tools', updated);
         return updated;
       }
       return t;
@@ -803,21 +793,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createResource = (data: Omit<Resource, 'id'>) => {
     const newRes: Resource = { ...data, id: `res_${Date.now()}` };
     setResources(prev => [...prev, newRes]);
-    syncDocToFirestore('resources', newRes.id, newRes);
+    syncToMongoAtlas('resources', newRes);
   };
   const updateResource = (data: Resource) => {
     setResources(prev => prev.map(r => r.id === data.id ? data : r));
-    syncDocToFirestore('resources', data.id, data);
+    syncToMongoAtlas('resources', data);
   };
   const deleteResource = (id: string) => {
     setResources(prev => prev.filter(r => r.id !== id));
-    removeDocFromFirestore('resources', id);
+    removeFromMongoAtlas('resources', id);
   };
   const toggleResourcePublish = (id: string) => {
     setResources(prev => prev.map(r => {
       if (r.id === id) {
         const updated = { ...r, published: !r.published };
-        syncDocToFirestore('resources', id, updated);
+        syncToMongoAtlas('resources', updated);
         return updated;
       }
       return r;
@@ -828,21 +818,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createTask = (data: Omit<Task, 'id'>) => {
     const newTask: Task = { ...data, id: `task_${Date.now()}` };
     setTasks(prev => [...prev, newTask]);
-    syncDocToFirestore('tasks', newTask.id, newTask);
+    syncToMongoAtlas('tasks', newTask);
   };
   const updateTask = (data: Task) => {
     setTasks(prev => prev.map(t => t.id === data.id ? data : t));
-    syncDocToFirestore('tasks', data.id, data);
+    syncToMongoAtlas('tasks', data);
   };
   const deleteTask = (id: string) => {
     setTasks(prev => prev.filter(t => t.id !== id));
-    removeDocFromFirestore('tasks', id);
+    removeFromMongoAtlas('tasks', id);
   };
   const toggleTaskPublish = (id: string) => {
     setTasks(prev => prev.map(t => {
       if (t.id === id) {
         const updated = { ...t, published: !t.published };
-        syncDocToFirestore('tasks', id, updated);
+        syncToMongoAtlas('tasks', updated);
         return updated;
       }
       return t;
@@ -853,21 +843,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createProject = (data: Omit<Project, 'id'>) => {
     const newProj: Project = { ...data, id: `proj_${Date.now()}` };
     setProjects(prev => [...prev, newProj]);
-    syncDocToFirestore('projects', newProj.id, newProj);
+    syncToMongoAtlas('projects', newProj);
   };
   const updateProject = (data: Project) => {
     setProjects(prev => prev.map(p => p.id === data.id ? data : p));
-    syncDocToFirestore('projects', data.id, data);
+    syncToMongoAtlas('projects', data);
   };
   const deleteProject = (id: string) => {
     setProjects(prev => prev.filter(p => p.id !== id));
-    removeDocFromFirestore('projects', id);
+    removeFromMongoAtlas('projects', id);
   };
   const toggleProjectPublish = (id: string) => {
     setProjects(prev => prev.map(p => {
       if (p.id === id) {
         const updated = { ...p, published: !p.published };
-        syncDocToFirestore('projects', id, updated);
+        syncToMongoAtlas('projects', updated);
         return updated;
       }
       return p;
@@ -885,18 +875,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!sub) return;
 
     const now = new Date().toISOString().split('T')[0];
+    const updatedSub: Submission = {
+      ...sub,
+      status,
+      feedback,
+      reviewedBy: adminName,
+      reviewedAt: now,
+    };
 
-    setSubmissions(prev =>
-      prev.map(s => s.id === submissionId ? {
-        ...s,
-        status,
-        feedback,
-        reviewedBy: adminName,
-        reviewedAt: now,
-      } : s)
-    );
+    setSubmissions(prev => prev.map(s => s.id === submissionId ? updatedSub : s));
+    syncToMongoAtlas('submissions', updatedSub);
 
-    // If approved, award XP and mark task/project completed
     if (status === 'approved') {
       let xpEarned = 50;
       if (sub.type === 'task') {
@@ -918,19 +907,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updatedSkills['Machine Learning'] = Math.min(100, (updatedSkills['Machine Learning'] || 50) + 10);
         updatedSkills['AI Engineering'] = Math.min(100, (updatedSkills['AI Engineering'] || 40) + 10);
 
+        const updatedProfile = {
+          ...p,
+          xp: newXP,
+          skills: updatedSkills,
+          completedTaskIds: completedTasks,
+          completedProjectIds: completedProjects,
+        };
+
+        syncToMongoAtlas('studentProfiles', updatedProfile);
+
         return {
           ...prev,
-          [sub.studentId]: {
-            ...p,
-            xp: newXP,
-            skills: updatedSkills,
-            completedTaskIds: completedTasks,
-            completedProjectIds: completedProjects,
-          },
+          [sub.studentId]: updatedProfile,
         };
       });
 
-      // Log Action
       logUserAction({
         userId: sub.studentId,
         userName: sub.studentName,
@@ -940,7 +932,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: `Submission approved by ${adminName}. Awarded +${xpEarned} XP`,
       });
 
-      // Notify Student
       const notif: AppNotification = {
         id: `notif_${Date.now()}`,
         studentId: sub.studentId,
@@ -951,8 +942,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createdAt: now,
       };
       setNotifications(prev => [notif, ...prev]);
+      syncToMongoAtlas('notifications', notif);
     } else {
-      // Notify Student for revision/rejection
       const notif: AppNotification = {
         id: `notif_${Date.now()}`,
         studentId: sub.studentId,
@@ -963,6 +954,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createdAt: now,
       };
       setNotifications(prev => [notif, ...prev]);
+      syncToMongoAtlas('notifications', notif);
     }
   };
 
@@ -974,35 +966,39 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: new Date().toISOString().split('T')[0],
     };
     setAnnouncements(prev => [newAnn, ...prev]);
+    syncToMongoAtlas('announcements', newAnn);
   };
   const deleteAnnouncement = (id: string) => {
     setAnnouncements(prev => prev.filter(a => a.id !== id));
+    removeFromMongoAtlas('announcements', id);
   };
 
   // ADMIN ACTIONS - ROADMAP NODES
   const createRoadmapNode = (data: Omit<RoadmapNode, 'id'>) => {
     const newNode: RoadmapNode = { ...data, id: `rm_${Date.now()}` };
     setRoadmapNodes(prev => [...prev, newNode]);
-    syncDocToFirestore('roadmapNodes', newNode.id, newNode);
+    syncToMongoAtlas('roadmapNodes', newNode);
   };
 
   const updateRoadmapNode = (data: RoadmapNode) => {
     setRoadmapNodes(prev => prev.map(n => n.id === data.id ? data : n));
-    syncDocToFirestore('roadmapNodes', data.id, data);
+    syncToMongoAtlas('roadmapNodes', data);
   };
 
   const deleteRoadmapNode = (id: string) => {
     setRoadmapNodes(prev => prev.filter(n => n.id !== id));
-    removeDocFromFirestore('roadmapNodes', id);
+    removeFromMongoAtlas('roadmapNodes', id);
   };
 
   // ADMIN ACTIONS - ACHIEVEMENTS
   const createAchievement = (data: Omit<Achievement, 'id'>) => {
     const newAch: Achievement = { ...data, id: `ach_${Date.now()}` };
     setAchievements(prev => [...prev, newAch]);
+    syncToMongoAtlas('achievements', newAch);
   };
   const deleteAchievement = (id: string) => {
     setAchievements(prev => prev.filter(a => a.id !== id));
+    removeFromMongoAtlas('achievements', id);
   };
 
   return (
@@ -1039,6 +1035,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateLevel,
       deleteLevel,
       toggleLevelPublish,
+      toggleLevelLock,
 
       createModule,
       updateModule,

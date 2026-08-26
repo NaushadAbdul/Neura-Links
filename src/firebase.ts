@@ -22,13 +22,13 @@ import { getAnalytics } from 'firebase/analytics';
 
 // Provided Firebase configuration
 export const firebaseConfig = {
-  apiKey: "AIzaSyC8WZkOZvcsR3W3ZU2rvXwGp9idiY8eLqU",
-  authDomain: "club-b35f3.firebaseapp.com",
-  projectId: "club-b35f3",
-  storageBucket: "club-b35f3.firebasestorage.app",
-  messagingSenderId: "1012598614314",
-  appId: "1:1012598614314:web:5eded22460f844f7439653",
-  measurementId: "G-2RC1QFGVSP"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyC8WZkOZvcsR3W3ZU2rvXwGp9idiY8eLqU",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "club-b35f3.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "club-b35f3",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "club-b35f3.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "1012598614314",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1012598614314:web:5eded22460f844f7439653",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-2RC1QFGVSP"
 };
 
 // Initialize Firebase App

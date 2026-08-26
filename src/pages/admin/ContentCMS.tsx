@@ -17,6 +17,8 @@ import {
   Video,
   FileText,
   Zap,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 
 export const ContentCMS: React.FC = () => {
@@ -28,6 +30,7 @@ export const ContentCMS: React.FC = () => {
     updateLevel,
     deleteLevel,
     toggleLevelPublish,
+    toggleLevelLock,
     createModule,
     updateModule,
     deleteModule,
@@ -39,7 +42,7 @@ export const ContentCMS: React.FC = () => {
   } = useData();
 
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<'levels' | 'modules' | 'lessons'>('modules');
+  const [activeTab, setActiveTab] = useState<'levels' | 'modules' | 'lessons'>('levels');
 
   useEffect(() => {
     if (location.pathname.includes('/levels')) {
@@ -61,6 +64,7 @@ export const ContentCMS: React.FC = () => {
   const [lvlOrder, setLvlOrder] = useState<number>(1);
   const [lvlDesc, setLvlDesc] = useState('');
   const [lvlPublished, setLvlPublished] = useState<boolean>(true);
+  const [lvlLocked, setLvlLocked] = useState<boolean>(false);
 
   // Form inputs for Module creation
   const [modTitle, setModTitle] = useState('');
@@ -85,12 +89,14 @@ export const ContentCMS: React.FC = () => {
       setLvlOrder(lvl.order);
       setLvlDesc(lvl.description);
       setLvlPublished(lvl.published);
+      setLvlLocked(Boolean(lvl.isLocked));
     } else {
       setEditingLevel(null);
       setLvlTitle('');
       setLvlOrder(levels.length + 1);
       setLvlDesc('');
       setLvlPublished(true);
+      setLvlLocked(false);
     }
     setLevelModalOpen(true);
   };
@@ -106,6 +112,7 @@ export const ContentCMS: React.FC = () => {
         order: Number(lvlOrder),
         description: lvlDesc.trim(),
         published: lvlPublished,
+        isLocked: lvlLocked,
       });
     } else {
       createLevel({
@@ -113,6 +120,7 @@ export const ContentCMS: React.FC = () => {
         order: Number(lvlOrder),
         description: lvlDesc.trim(),
         published: lvlPublished,
+        isLocked: lvlLocked,
       });
     }
     setLevelModalOpen(false);
@@ -246,44 +254,18 @@ export const ContentCMS: React.FC = () => {
         <div className="flex space-x-6">
           <button
             onClick={() => setActiveTab('levels')}
-            className={`font-heading text-sm uppercase tracking-wider font-bold border-b-2 pb-2 transition-all cursor-pointer ${
-              activeTab === 'levels' ? 'border-[#FFF8DC] text-[#FFF8DC]' : 'border-transparent text-gray-400 hover:text-gray-200'
-            }`}
+            className={`font-heading text-sm uppercase tracking-wider font-bold border-b-2 pb-2 transition-all cursor-pointer border-[#FFF8DC] text-[#FFF8DC]`}
           >
-            Levels ({levels.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('modules')}
-            className={`font-heading text-sm uppercase tracking-wider font-bold border-b-2 pb-2 transition-all cursor-pointer ${
-              activeTab === 'modules' ? 'border-[#FFF8DC] text-[#FFF8DC]' : 'border-transparent text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            Modules ({modules.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('lessons')}
-            className={`font-heading text-sm uppercase tracking-wider font-bold border-b-2 pb-2 transition-all cursor-pointer ${
-              activeTab === 'lessons' ? 'border-[#FFF8DC] text-[#FFF8DC]' : 'border-transparent text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            Lessons ({lessons.length})
+            Learning Levels ({levels.length})
           </button>
         </div>
 
         <button
-          onClick={() =>
-            activeTab === 'levels'
-              ? handleOpenLevelModal()
-              : activeTab === 'modules'
-              ? handleOpenModuleModal()
-              : handleOpenLessonModal()
-          }
+          onClick={() => handleOpenLevelModal()}
           className="bg-[#674846] hover:bg-[#7e5957] text-[#FFF8DC] border border-[#FFF8DC]/40 font-heading text-xs uppercase tracking-wider font-bold py-2.5 px-4 rounded-md transition-all shadow-[0_0_15px_rgba(103,72,70,0.5)] flex items-center space-x-2 cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4 text-[#FFF8DC]" />
-          <span>
-            Create New {activeTab === 'levels' ? 'Level' : activeTab === 'modules' ? 'Module' : 'Lesson'}
-          </span>
+          <span>Create New Level</span>
         </button>
       </div>
 
@@ -310,23 +292,43 @@ export const ContentCMS: React.FC = () => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => toggleLevelPublish(lvl.id)}
-                    className="flex items-center space-x-1 cursor-pointer"
-                    title={lvl.published ? 'Published to Students' : 'Unpublished (Hidden)'}
-                  >
-                    {lvl.published ? (
-                      <Badge variant="cornsilk" className="flex items-center space-x-1">
-                        <Eye className="w-3 h-3" />
-                        <span>Published</span>
-                      </Badge>
-                    ) : (
-                      <Badge variant="rose" className="flex items-center space-x-1">
-                        <EyeOff className="w-3 h-3" />
-                        <span>Hidden</span>
-                      </Badge>
-                    )}
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => toggleLevelLock(lvl.id)}
+                      className="flex items-center space-x-1 cursor-pointer"
+                      title={lvl.isLocked ? 'Level is Locked for Students' : 'Level is Unlocked (Accessible)'}
+                    >
+                      {lvl.isLocked ? (
+                        <Badge variant="rose" className="flex items-center space-x-1 border border-rose-600 bg-rose-950/80 text-rose-300 font-bold">
+                          <Lock className="w-3 h-3 text-rose-300" />
+                          <span>Locked</span>
+                        </Badge>
+                      ) : (
+                        <Badge variant="cornsilk" className="flex items-center space-x-1 border border-emerald-600/80 bg-emerald-950/60 text-emerald-300 font-bold">
+                          <Unlock className="w-3 h-3 text-emerald-300" />
+                          <span>Unlocked</span>
+                        </Badge>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => toggleLevelPublish(lvl.id)}
+                      className="flex items-center space-x-1 cursor-pointer"
+                      title={lvl.published ? 'Published to Students' : 'Unpublished (Hidden)'}
+                    >
+                      {lvl.published ? (
+                        <Badge variant="cornsilk" className="flex items-center space-x-1">
+                          <Eye className="w-3 h-3" />
+                          <span>Published</span>
+                        </Badge>
+                      ) : (
+                        <Badge variant="rose" className="flex items-center space-x-1">
+                          <EyeOff className="w-3 h-3" />
+                          <span>Hidden</span>
+                        </Badge>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <p className="text-xs text-gray-300 font-sans">{lvl.description}</p>
@@ -337,6 +339,19 @@ export const ContentCMS: React.FC = () => {
                   </span>
 
                   <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => toggleLevelLock(lvl.id)}
+                      className={`p-1.5 border rounded transition-colors cursor-pointer flex items-center space-x-1 text-xs font-mono font-bold ${
+                        lvl.isLocked
+                          ? 'bg-rose-950/80 border-rose-700 text-rose-300 hover:bg-rose-900'
+                          : 'bg-emerald-950/60 border-emerald-700 text-emerald-300 hover:bg-emerald-900'
+                      }`}
+                      title={lvl.isLocked ? 'Click to Unlock Level' : 'Click to Lock Level'}
+                    >
+                      {lvl.isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                      <span>{lvl.isLocked ? 'Unlock' : 'Lock'}</span>
+                    </button>
+
                     <button
                       onClick={() => handleOpenLevelModal(lvl)}
                       className="p-1.5 bg-[#161616] hover:bg-[#674846]/40 border border-[#674846] text-[#FFF8DC] rounded transition-colors cursor-pointer"
@@ -490,7 +505,7 @@ export const ContentCMS: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
               <label className="font-mono text-xs text-[#FFF8DC] uppercase font-bold">Order Number *</label>
               <input
@@ -510,8 +525,20 @@ export const ContentCMS: React.FC = () => {
                 onChange={(e) => setLvlPublished(e.target.value === 'published')}
                 className="w-full p-3 bg-[#1e1e1e] border border-[#674846]/40 text-xs text-[#FFF8DC] rounded-md focus:outline-none"
               >
-                <option value="published">Published (Visible to Students)</option>
-                <option value="hidden">Hidden (Draft)</option>
+                <option value="published">Published</option>
+                <option value="hidden">Hidden</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-mono text-xs text-[#FFF8DC] uppercase font-bold">Lock Status</label>
+              <select
+                value={lvlLocked ? 'locked' : 'unlocked'}
+                onChange={(e) => setLvlLocked(e.target.value === 'locked')}
+                className="w-full p-3 bg-[#1e1e1e] border border-[#674846]/40 text-xs text-[#FFF8DC] rounded-md focus:outline-none"
+              >
+                <option value="unlocked">🔓 Unlocked</option>
+                <option value="locked">🔒 Locked</option>
               </select>
             </div>
           </div>

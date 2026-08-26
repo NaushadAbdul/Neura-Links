@@ -108,12 +108,16 @@ export const StudentDashboard: React.FC = () => {
       {/* Progress Overview Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Current Level */}
-        <Card className="space-y-3 border-[#674846]/40 bg-[#1e1e1e]/90">
+        <Card
+          onClick={() => navigate('/resources')}
+          className="space-y-3 border-[#674846]/40 bg-[#1e1e1e]/90 cursor-pointer hover:border-[#FFF8DC]/60 transition-all group"
+          title="Click to view level resources"
+        >
           <div className="flex justify-between items-start">
-            <span className="font-mono text-[11px] text-[#FFF8DC]/70 uppercase tracking-wider">Current Level</span>
+            <span className="font-mono text-[11px] text-[#FFF8DC]/70 uppercase tracking-wider group-hover:text-[#FFF8DC]">Current Level</span>
             <Layers className="w-4 h-4 text-[#FFF8DC]" />
           </div>
-          <div className="font-cornsilk text-2xl font-normal text-[#FFF8DC] tracking-wide uppercase">
+          <div className="font-cornsilk text-2xl font-normal text-[#FFF8DC] tracking-wide uppercase group-hover:text-white transition-colors">
             {profile?.levelTitle || 'LEVEL 01 — PYTHON'}
           </div>
           <Badge variant="rose">Level 0{profile?.level || 1}</Badge>

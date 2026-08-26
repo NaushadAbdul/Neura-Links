@@ -98,17 +98,60 @@ export const LearningHub: React.FC = () => {
             const levelModules = filteredModules.filter(m => m.levelId === lvl.id);
             if (levelModules.length === 0 && searchQuery !== '') return null;
 
+            const isLocked = lvl.isLocked;
+
+            const handleLevelClick = () => {
+              if (isLocked) {
+                alert(`🔒 Level Locked\n\n"${lvl.title}" is currently locked by the Administrator. Please complete earlier modules or wait for administrator unlock.`);
+              } else {
+                navigate('/resources');
+              }
+            };
+
             return (
-              <div key={lvl.id} className="space-y-4">
-                <div className="flex items-center space-x-3 border-b border-[#674846]/40 pb-2">
-                  <div className="w-8 h-8 rounded bg-[#674846] border border-[#FFF8DC]/40 flex items-center justify-center font-mono font-bold text-[#FFF8DC] text-xs shadow-md">
-                    {String(lvl.order).padStart(2, '0')}
+              <div key={lvl.id} className={`space-y-4 transition-all ${isLocked ? 'opacity-70' : ''}`}>
+                <div
+                  onClick={handleLevelClick}
+                  className={`flex items-center justify-between border-b pb-2 transition-all ${
+                    isLocked
+                      ? 'border-rose-900/60 cursor-not-allowed bg-rose-950/20 px-3 py-1.5 rounded-t-md'
+                      : 'border-[#674846]/40 cursor-pointer group hover:border-[#FFF8DC]/60'
+                  }`}
+                  title={isLocked ? 'Level Locked by Admin' : 'Click to view level resources'}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-8 h-8 rounded border flex items-center justify-center font-mono font-bold text-xs shadow-md transition-colors ${
+                      isLocked
+                        ? 'bg-rose-950 border-rose-700 text-rose-300'
+                        : 'bg-[#674846] border-[#FFF8DC]/40 text-[#FFF8DC] group-hover:bg-[#FFF8DC] group-hover:text-[#161616]'
+                    }`}>
+                      {isLocked ? <Lock className="w-4 h-4 text-rose-300" /> : String(lvl.order).padStart(2, '0')}
+                    </div>
+                    <div>
+                      <h2 className="font-cornsilk text-xl font-normal text-[#FFF8DC] tracking-wide uppercase flex items-center space-x-2">
+                        <span>{lvl.title}</span>
+                        {isLocked && (
+                          <Badge variant="rose" className="font-mono text-[10px] tracking-wider uppercase border border-rose-700 bg-rose-950 text-rose-300 font-bold ml-2">
+                            🔒 LOCKED BY ADMIN
+                          </Badge>
+                        )}
+                      </h2>
+                      <p className="text-xs text-gray-400">{lvl.description}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="font-cornsilk text-xl font-normal text-[#FFF8DC] tracking-wide uppercase">
-                      {lvl.title}
-                    </h2>
-                    <p className="text-xs text-gray-400">{lvl.description}</p>
+
+                  <div className="hidden sm:flex items-center space-x-1.5 text-xs font-heading uppercase tracking-wider font-bold">
+                    {isLocked ? (
+                      <span className="text-rose-400 flex items-center space-x-1">
+                        <Lock className="w-3.5 h-3.5 text-rose-400" />
+                        <span>LOCKED</span>
+                      </span>
+                    ) : (
+                      <span className="text-[#FFF8DC] opacity-80 group-hover:opacity-100 group-hover:translate-x-1 flex items-center space-x-1.5 transition-all">
+                        <span>View Resources</span>
+                        <ArrowRight className="w-4 h-4 text-[#FFF8DC]" />
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -126,16 +169,28 @@ export const LearningHub: React.FC = () => {
                     }, 0);
                     const modWatchPercent = moduleLessons.length > 0 ? Math.round(totalWatchPercent / moduleLessons.length) : 0;
 
+                    const handleModuleClick = () => {
+                      if (isLocked) {
+                        alert(`🔒 Level Locked\n\n"${lvl.title}" is currently locked by the Administrator. Please complete earlier modules or wait for administrator unlock.`);
+                      } else {
+                        navigate(`/module/${mod.id}`);
+                      }
+                    };
+
                     return (
                       <Card
                         key={mod.id}
-                        onClick={() => navigate('/resources')}
-                        className="space-y-4 flex flex-col justify-between group border-[#674846]/40 bg-[#161616] hover:border-[#FFF8DC]/60 cursor-pointer"
+                        onClick={handleModuleClick}
+                        className={`space-y-4 flex flex-col justify-between group transition-all ${
+                          isLocked
+                            ? 'border-rose-900/40 bg-[#161616]/80 cursor-not-allowed opacity-75'
+                            : 'border-[#674846]/40 bg-[#161616] hover:border-[#FFF8DC]/60 cursor-pointer'
+                        }`}
                       >
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
-                            <Badge variant={isCompleted ? 'cornsilk' : 'rose'}>
-                              {isCompleted ? 'Module Completed' : mod.difficulty}
+                            <Badge variant={isLocked ? 'rose' : (isCompleted ? 'cornsilk' : 'rose')}>
+                              {isLocked ? '🔒 Level Locked' : (isCompleted ? 'Module Completed' : mod.difficulty)}
                             </Badge>
                             <span className="font-mono text-xs text-gray-400 flex items-center space-x-1">
                               <Clock className="w-3.5 h-3.5 text-[#FFF8DC]" />
@@ -153,8 +208,17 @@ export const LearningHub: React.FC = () => {
 
                         <div className="pt-4 border-t border-[#674846]/40 flex items-center justify-end">
                           <span className="font-heading text-xs uppercase tracking-wider text-[#FFF8DC] group-hover:text-white font-bold flex items-center space-x-1">
-                            <span>Open Resources</span>
-                            <ArrowRight className="w-3.5 h-3.5 text-[#FFF8DC]" />
+                            {isLocked ? (
+                              <span className="text-rose-400 flex items-center space-x-1">
+                                <Lock className="w-3.5 h-3.5 text-rose-400" />
+                                <span>Locked</span>
+                              </span>
+                            ) : (
+                              <>
+                                <span>Open Resources</span>
+                                <ArrowRight className="w-3.5 h-3.5 text-[#FFF8DC]" />
+                              </>
+                            )}
                           </span>
                         </div>
                       </Card>

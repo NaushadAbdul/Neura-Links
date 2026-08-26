@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { ProgressBar } from '../../components/common/ProgressBar';
-import { ArrowLeft, BookOpen, PlayCircle, CheckCircle2, Zap, Clock, Code2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, PlayCircle, CheckCircle2, Zap, Clock, Code2, Lock } from 'lucide-react';
 
 export const ModuleDetail: React.FC = () => {
   const { moduleId } = useParams<{ moduleId: string }>();
@@ -41,6 +41,21 @@ export const ModuleDetail: React.FC = () => {
       <div className="p-8 text-center text-gray-400 space-y-4">
         <div>Module not found or unpublished.</div>
         <button onClick={() => navigate('/learning')} className="text-[#EFE9DC] font-mono text-xs underline">
+          ← Return to Learning Hub
+        </button>
+      </div>
+    );
+  }
+
+  if (levelItem?.isLocked) {
+    return (
+      <div className="p-12 text-center text-[#EFE9DC] space-y-4 bg-[#1c1c19] border border-rose-900/60 rounded-xl">
+        <Lock className="w-12 h-12 text-rose-400 mx-auto" />
+        <h2 className="font-cornsilk text-2xl uppercase font-bold text-rose-300">🔒 Level Locked by Administrator</h2>
+        <p className="text-xs text-gray-300 max-w-md mx-auto">
+          "{levelItem.title}" is currently locked. Complete earlier modules or wait for administrator unlock.
+        </p>
+        <button onClick={() => navigate('/learning')} className="px-4 py-2 bg-[#674846] text-[#FFF8DC] font-heading text-xs uppercase rounded-md font-bold cursor-pointer">
           ← Return to Learning Hub
         </button>
       </div>
