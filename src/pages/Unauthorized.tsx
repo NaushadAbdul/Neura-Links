@@ -1,11 +1,11 @@
 import React from 'react';
-import { ShieldAlert, ArrowLeft, Mail } from 'lucide-react';
+import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export const Unauthorized: React.FC = () => {
   const navigate = useNavigate();
-  const { logout, switchDemoRole } = useAuth();
+  const { logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-[#070709] text-white flex items-center justify-center p-6 relative overflow-hidden">
@@ -28,26 +28,16 @@ export const Unauthorized: React.FC = () => {
           </p>
         </div>
 
-        <div className="space-y-3 pt-2">
+        <div className="pt-2">
           <button
             onClick={() => {
               logout();
               navigate('/login');
             }}
-            className="w-full bg-[#1a1a24] hover:bg-[#252535] border border-[#2e2e40] text-white font-heading text-xs tracking-wider uppercase py-3 rounded-md flex items-center justify-center space-x-2 transition-all"
+            className="w-full bg-[#1a1a24] hover:bg-[#252535] border border-[#2e2e40] text-white font-heading text-xs tracking-wider uppercase py-3 rounded-md flex items-center justify-center space-x-2 transition-all cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Login</span>
-          </button>
-
-          <button
-            onClick={() => {
-              switchDemoRole('student');
-              navigate('/dashboard');
-            }}
-            className="w-full bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800 text-purple-300 font-heading text-xs tracking-wider uppercase py-3 rounded-md transition-all"
-          >
-            Switch to Approved Student Demo (Naushad)
           </button>
         </div>
       </div>
